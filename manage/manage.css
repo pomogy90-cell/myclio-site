@@ -459,3 +459,26 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
 .mc-r3{font-size:11.5px;color:var(--mut);margin-top:1px}
 .mc-empty{color:var(--mut);font-size:13px;padding:20px 6px;text-align:center}
 @media (max-width:860px){.mng-cash-g{grid-template-columns:1fr}.mc-list{max-height:230px}.mc-sum{font-size:34px}}
+
+/* ================= КАССА — ТЗ №3 (27.11-В11): категории, статьи, фильтр ================= */
+.mc-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mc-kpi{border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:1px;border:1px solid var(--line)}
+.mc-kpi span{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.mc-kpi b{font-family:Marcellus,serif;font-size:20px;line-height:1.15}
+.mc-kpi.cost{background:#fdf3f2;border-color:#f0d8d3}
+.mc-kpi.cost b{color:var(--red)}
+.mc-kpi.profit{background:#f2f7ec;border-color:#dbe7c9}
+.mc-kpi.profit b{color:#4e7a2a}
+.mc-flt{display:inline-flex;gap:5px;flex-wrap:wrap}
+.mng-btn.sm.on{background:var(--wine);border-color:var(--wine);color:#fff}
+.mc-cat{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-left:auto}
+.mc-cat.cost{background:#f9e8e4;color:#a4442f}
+.mc-cat.profit{background:#e9f2dc;color:#4e7a2a}
+.mc-r1 .mc-amt{margin-left:auto}
+.mc-r1:has(.mc-cat) .mc-amt{margin-left:0}
+.mc-seg{display:flex;gap:0;border:1.5px solid var(--line2);border-radius:12px;overflow:hidden}
+.mc-seg button{flex:1;padding:11px 8px;font:inherit;font-size:14.5px;font-weight:800;background:#fffdf8;color:var(--mut);border:0;cursor:pointer;transition:.15s}
+.mc-seg button.on{background:var(--wine);color:#fff}
+.mc-after{margin-top:10px;background:#faf5e9;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13.5px;color:var(--mut);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.mc-after b{font-family:Marcellus,serif;font-size:18px;color:var(--wine);white-space:nowrap}
+@media (max-width:860px){.mc-kpis{grid-template-columns:1fr 1fr}.mc-kpi b{font-size:18px}}

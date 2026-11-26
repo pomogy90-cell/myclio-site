@@ -93,7 +93,32 @@ function book_save($b){ global $F_BOOK; jwrite($F_BOOK, $b); }
    оплата которой внесена после задания начального остатка (метка cash_at ставится при сохранении).
    Вознаграждение специалиста кассу НЕ уменьшает — выдача оформляется отдельной операцией. */
 function cash_default(){ return ['opening'=>0, 'opening_set'=>false, 'opening_at'=>0, 'opening_by'=>'', 'payouts'=>[]]; }
-function cash_load(){ global $F_CASH; $c = jread($F_CASH, cash_default()); if (!isset($c['payouts']) || !is_array($c['payouts'])) $c['payouts'] = []; return $c; }
+/* статьи расходов категории «Затраты» (27.11-В11) */
+function cash_articles(){
+    return ['Расходы на салон «Клио»', 'Офисные расходы', 'Представительские расходы',
+            'Оплата сервисов и программного обеспечения', 'Оплата сторонних услуг',
+            'Оплата связи и коммуникаций', 'Прочие расходы'];
+}
+function cash_load(){
+    global $F_CASH;
+    $c = jread($F_CASH, cash_default());
+    if (!isset($c['payouts']) || !is_array($c['payouts'])) $c['payouts'] = [];
+    /* миграция формата В10: было purpose (свободный текст) → категория «Затраты»,
+       статья «Прочие расходы», прежний текст назначения — в комментарий */
+    $mig = false;
+    foreach ($c['payouts'] as $i => $p) {
+        if (isset($p['cat'])) continue;
+        $cm = trim((string)($p['purpose'] ?? ''));
+        if (!empty($p['comment'])) $cm = trim($cm . ($cm !== '' ? ' · ' : '') . (string)$p['comment']);
+        $c['payouts'][$i]['cat'] = 'cost';
+        $c['payouts'][$i]['article'] = 'Прочие расходы';
+        $c['payouts'][$i]['comment'] = $cm;
+        unset($c['payouts'][$i]['purpose']);
+        $mig = true;
+    }
+    if ($mig) jwrite($F_CASH, $c);
+    return $c;
+}
 function cash_receipts($b, $from){
     $in = 0;
     foreach (($b['items'] ?? []) as $it) {
@@ -543,17 +568,29 @@ if ($action === 'cash_opening') {
     out(['ok'=>true, 'cash'=>cash_public($cash, book_load())]);
 }
 
-/* ================= CASH_PAYOUT: регистрация выдачи наличных из кассы ================= */
+/* ================= CASH_PAYOUT: изъятие наличных из кассы (затраты / прибыль) ================= */
 if ($action === 'cash_payout') {
     $amount = $body['amount'] ?? null;
     $amount = ($amount === '' || $amount === null) ? null : (int)$amount;
+    $cat      = in_array(($body['cat'] ?? ''), ['cost','profit'], true) ? (string)$body['cat'] : '';
+    $article  = mb_substr(trim((string)($body['article'] ?? '')), 0, 120);
     $receiver = mb_substr(trim((string)($body['receiver'] ?? '')), 0, 80);
-    $purpose  = mb_substr(trim((string)($body['purpose'] ?? '')), 0, 160);
     $comment  = mb_substr(trim((string)($body['comment'] ?? '')), 0, 300);
     $op       = mb_substr(trim((string)($body['op'] ?? '')), 0, 64);
-    if ($amount === null || $amount <= 0 || $amount > 100000000) out(['ok'=>false,'err'=>'Укажите корректную сумму выдачи.'], 400);
-    if ($receiver === '') out(['ok'=>false,'err'=>'Укажите получателя денежных средств.'], 400);
-    if ($purpose === '') out(['ok'=>false,'err'=>'Укажите назначение расхода.'], 400);
+    /* совместимость с клиентом В10: purpose без cat → затраты, статья «Прочие расходы» */
+    $purpose  = mb_substr(trim((string)($body['purpose'] ?? '')), 0, 160);
+    if ($cat === '' && $purpose !== '') {
+        $cat = 'cost'; $article = 'Прочие расходы';
+        $comment = trim($purpose . ($comment !== '' ? ' · ' . $comment : ''));
+    }
+    if ($amount === null || $amount <= 0 || $amount > 100000000) out(['ok'=>false,'err'=>'Укажите корректную сумму изъятия.'], 400);
+    if ($cat === '') out(['ok'=>false,'err'=>'Укажите категорию операции.'], 400);
+    if ($cat === 'cost') {
+        if (!in_array($article, cash_articles(), true)) out(['ok'=>false,'err'=>'Выберите статью расходов.'], 400);
+        if ($receiver === '') out(['ok'=>false,'err'=>'Укажите получателя денежных средств.'], 400);
+    } else { /* прибыль: статья и получатель не требуются */
+        $article = ''; $receiver = '';
+    }
 
     /* вся операция — под эксклюзивной блокировкой: две одновременные выдачи не создадут минус */
     $fp = fopen($F_CASH, 'c+');
@@ -565,6 +602,16 @@ if ($action === 'cash_payout') {
     if (empty($cash['opening_set'])) {
         flock($fp, LOCK_UN); fclose($fp);
         out(['ok'=>false,'err'=>'Сначала задайте начальный остаток кассы.'], 400);
+    }
+    /* миграция старого формата выдач (В10) внутри блокировки */
+    foreach ($cash['payouts'] as $i => $p) {
+        if (isset($p['cat'])) continue;
+        $cm = trim((string)($p['purpose'] ?? ''));
+        if (!empty($p['comment'])) $cm = trim($cm . ($cm !== '' ? ' · ' : '') . (string)$p['comment']);
+        $cash['payouts'][$i]['cat'] = 'cost';
+        $cash['payouts'][$i]['article'] = 'Прочие расходы';
+        $cash['payouts'][$i]['comment'] = $cm;
+        unset($cash['payouts'][$i]['purpose']);
     }
     /* идемпотентность: повторная отправка той же операции (двойной тап, обрыв сети) не списывает деньги дважды */
     if ($op !== '') {
@@ -586,20 +633,23 @@ if ($action === 'cash_payout') {
     $maxId = 0;
     foreach ($cash['payouts'] as $p) if (preg_match('/^p(\d+)$/', (string)($p['id'] ?? ''), $m)) $maxId = max($maxId, (int)$m[1]);
     $it = ['id'=>'p' . ($maxId + 1), 'op'=>$op, 't'=>$now, 'amount'=>$amount,
-           'receiver'=>$receiver, 'purpose'=>$purpose, 'comment'=>$comment,
+           'cat'=>$cat, 'article'=>$article, 'receiver'=>$receiver, 'comment'=>$comment,
            'by'=>$me['name'] !== '' ? $me['name'] : '—'];
     $cash['payouts'][] = $it;
     rewind($fp); ftruncate($fp, 0);
     fwrite($fp, json_encode($cash, JSON_UNESCAPED_UNICODE));
     fflush($fp); flock($fp, LOCK_UN); fclose($fp);
 
-    hist_log('cash_payout', 'cash', $it['id'], 'Касса: выдача наличных',
-        number_format($amount, 0, '', ' ') . ' ₽ · ' . $receiver . ' · ' . $purpose,
+    $catRu = $cat === 'profit' ? 'Прибыль' : 'Затраты';
+    hist_log('cash_payout', 'cash', $it['id'],
+        $cat === 'profit' ? 'Касса: изъятие (прибыль)' : 'Касса: изъятие (затраты)',
+        number_format($amount, 0, '', ' ') . ' ₽ · ' . ($cat === 'profit' ? 'Прибыль' : $article) . ($receiver !== '' ? ' · ' . $receiver : ''),
         $me['name'] !== '' ? $me['name'] : '—', $me['src'],
         ['fin'=>1, 'after'=>[
             'Сумма'=>number_format($amount, 0, '', ' ') . ' ₽',
-            'Получатель'=>$receiver,
-            'Назначение'=>$purpose,
+            'Категория'=>$catRu,
+            'Статья'=>$article !== '' ? $article : '—',
+            'Получатель'=>$receiver !== '' ? $receiver : '—',
             'Комментарий'=>$comment !== '' ? $comment : '—']]);
     out(['ok'=>true, 'cash'=>cash_public($cash, $b)]);
 }

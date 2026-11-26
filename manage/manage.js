@@ -20,7 +20,7 @@ var S = {
   lst: {q:'', per:'upcoming', spec:'', dir:'', st:'', sort:'date'},
   ui: {step:15, hourH:64, hideSpecs:[], compact:false, groupBy:'dir'},
   cash: {opening_set:false, opening:0, in:0, out:0, balance:0, payouts:[]},
-  cashStamp: ''
+  cashStamp: '', cashFlt: 'all'
 };
 try {
   var uis = JSON.parse(localStorage.getItem('klio_manage_ui') || 'null');
@@ -51,6 +51,10 @@ function m2t(m){ return p2(Math.floor(m/60)) + ':' + p2(m%60); }
 
 /* отпечаток состояния кассы — чтобы перерисовывать блок только при реальном изменении */
 function cashStamp(c){ return JSON.stringify([c.opening_set, c.opening, c.in, c.out, c.balance, (c.payouts || []).length]); }
+/* статьи расходов категории «Затраты» (зеркало списка в api/manage.php) */
+var CASH_ARTS = ['Расходы на салон «Клио»', 'Офисные расходы', 'Представительские расходы',
+  'Оплата сервисов и программного обеспечения', 'Оплата сторонних услуг',
+  'Оплата связи и коммуникаций', 'Прочие расходы'];
 /* иллюстрация кассового аппарата — фирменная линейная графика (бордо + золото) */
 var CASH_SVG = '<svg viewBox="0 0 140 112" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
   '<path d="M88 8h20v26l-3-2.4-3 2.4-3-2.4-3 2.4-3-2.4-3 2.4z" fill="#fffdfa"/>' +
@@ -1504,13 +1508,19 @@ function balItems(){
 function cashHtml(r){
   var c = S.cash || {opening_set:false, opening:0, balance:0, payouts:[]};
   var from = r[0], to = r[1];
+  /* операции выбранного периода; категории: cost — затраты, profit — прибыль */
   var rows = (c.payouts || []).filter(function(p){
     var d = new Date((p.t || 0) * 1000);
     var ds = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
     return ds >= from && ds <= to;
   }).sort(function(a, b){ return (b.t || 0) - (a.t || 0); });
-  var perSum = 0;
-  rows.forEach(function(p){ perSum += p.amount || 0; });
+  var costSum = 0, profitSum = 0;
+  rows.forEach(function(p){
+    if ((p.cat || 'cost') === 'profit') profitSum += p.amount || 0;
+    else costSum += p.amount || 0;
+  });
+  var flt = S.cashFlt || 'all';
+  var shown = rows.filter(function(p){ return flt === 'all' ? true : (p.cat || 'cost') === flt; });
 
   var left =
     '<div class="mng-cash-l">' +
@@ -1518,7 +1528,7 @@ function cashHtml(r){
       '<div class="mc-cap">Текущий остаток наличных</div>' +
       '<div class="mc-sum" id="mcCashSum">' + rub(c.balance) + '</div>' +
       (c.opening_set
-        ? '<button class="mng-btn gold" id="cashOut" style="margin-top:6px;padding:11px 22px">Выдать из кассы</button>'
+        ? '<button class="mng-btn gold" id="cashOut" style="margin-top:6px;padding:11px 22px"' + (c.balance > 0 ? '' : ' disabled') + '>Изъятие кассы</button>'
         : '<div class="mc-first">' +
             '<div class="mc-first-t">Первый запуск кассы</div>' +
             '<div class="mc-first-s">Внесите фактический остаток наличных в кассе салона. Операция однократная — дальше остаток считается автоматически.</div>' +
@@ -1530,19 +1540,29 @@ function cashHtml(r){
       '<div class="mc-hint">Наличные поступают в кассу при оплате записей способом «Наличные». Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
     '</div>';
 
-  var rowsHtml = rows.length ? rows.map(function(p){
+  var rowsHtml = shown.length ? shown.map(function(p){
     var d = new Date((p.t || 0) * 1000);
     var dt = p2(d.getDate()) + '.' + p2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    var isP = (p.cat || 'cost') === 'profit';
     return '<div class="mc-row">' +
-      '<div class="mc-r1"><b>' + esc(p.purpose || '—') + '</b><span class="mc-amt">−' + rub(p.amount || 0) + '</span></div>' +
-      '<div class="mc-r2">Получатель: <b>' + esc(p.receiver || '—') + '</b>' + (p.comment ? ' · ' + esc(p.comment) : '') + '</div>' +
+      '<div class="mc-r1"><b>' + esc(isP ? 'Прибыль' : (p.article || 'Прочие расходы')) + '</b>' +
+        '<span class="mc-cat ' + (isP ? 'profit' : 'cost') + '">' + (isP ? 'Прибыль' : 'Затраты') + '</span>' +
+        '<span class="mc-amt">−' + rub(p.amount || 0) + '</span></div>' +
+      '<div class="mc-r2">' + (isP ? 'Изъятие собственником' : 'Получатель: <b>' + esc(p.receiver || '—') + '</b>') + (p.comment ? ' · ' + esc(p.comment) : '') + '</div>' +
       '<div class="mc-r3">' + dt + ' · зарегистрировал(а): ' + esc(p.by || '—') + '</div>' +
     '</div>';
-  }).join('') : '<div class="mc-empty">За выбранный период выдач из кассы не было.</div>';
+  }).join('') : '<div class="mc-empty">' + (flt === 'all' ? 'За выбранный период операций по кассе не было.' : (flt === 'cost' ? 'Затрат за выбранный период нет.' : 'Изъятий прибыли за выбранный период нет.')) + '</div>';
 
   var right =
     '<div class="mng-cash-r">' +
-      '<div class="mc-rh"><span>История выдачи наличных</span><b>Выдано за период: ' + rub(perSum) + '</b></div>' +
+      '<div class="mc-kpis">' +
+        '<div class="mc-kpi cost"><span>Затраты за период</span><b>' + rub(costSum) + '</b></div>' +
+        '<div class="mc-kpi profit"><span>Прибыль за период</span><b>' + rub(profitSum) + '</b></div>' +
+      '</div>' +
+      '<div class="mc-rh"><span>История операций</span><span class="mc-flt">' +
+        [['all','Все'],['cost','Затраты'],['profit','Прибыль']].map(function(f){
+          return '<button class="mng-btn sm' + (flt === f[0] ? ' on' : '') + '" data-cflt="' + f[0] + '">' + f[1] + '</button>';
+        }).join('') + '</span></div>' +
       '<div class="mc-list">' + rowsHtml + '</div>' +
     '</div>';
 
@@ -1552,6 +1572,9 @@ function cashHtml(r){
 function bindCash(body){
   var outBtn = document.getElementById('cashOut');
   if (outBtn) outBtn.onclick = openCashOut;
+  Array.prototype.forEach.call(body.querySelectorAll('[data-cflt]'), function(b){
+    b.onclick = function(){ S.cashFlt = b.dataset.cflt; renderBal(); };
+  });
   var opBtn = document.getElementById('cashOpenBtn');
   if (opBtn) opBtn.onclick = function(){
     var v = parseInt((document.getElementById('cashOpenSum').value || '').replace(/[^\d]/g, ''), 10);
@@ -1567,28 +1590,57 @@ function bindCash(body){
 }
 function openCashOut(){
   var old = document.getElementById('mngOvl'); if (old) old.remove();
+  var bal = (S.cash || {}).balance || 0;
+  if (bal <= 0) { toast('Касса пуста — изъятие невозможно'); return; }
   var ovl = document.createElement('div');
   ovl.className = 'mng-ovl'; ovl.id = 'mngOvl';
   var specsDl = (S.meta.specialists || []).map(function(s){ return '<option value="' + esc(s) + '">'; }).join('');
   ovl.innerHTML =
   '<div class="mng-card">' +
     '<div class="mng-grip"></div><button class="mng-x" id="coX">✕</button>' +
-    '<h2 style="margin-bottom:2px">Выдача из кассы</h2>' +
-    '<div class="who">Сейчас в кассе: <b>' + rub((S.cash || {}).balance || 0) + '</b></div>' +
-    '<hr class="mng-hr">' +
-    '<label class="mng-lbl">Сумма выдачи, ₽</label>' +
-    '<input class="mng-inp" id="coSum" type="text" inputmode="numeric" placeholder="0" autocomplete="off">' +
-    '<label class="mng-lbl">Получатель денежных средств</label>' +
-    '<input class="mng-inp" id="coWho" list="coSpecs" placeholder="Кому выдаются деньги" autocomplete="off"><datalist id="coSpecs">' + specsDl + '</datalist>' +
-    '<label class="mng-lbl">Назначение расхода</label>' +
-    '<input class="mng-inp" id="coPurp" list="coPurps" placeholder="Например: закупка материалов" autocomplete="off">' +
-    '<datalist id="coPurps"><option value="Закупка материалов"><option value="Хозяйственные расходы"><option value="Выплата вознаграждения специалисту"><option value="Инкассация"><option value="Возврат клиенту"></datalist>' +
-    '<label class="mng-lbl">Комментарий (необязательно)</label>' +
-    '<input class="mng-inp" id="coComm" placeholder="Примечание к операции" autocomplete="off">' +
-    '<div class="mng-err" id="coErr" style="display:none"></div>' +
-    '<div class="mng-actions">' +
-      '<button class="mng-btn" id="coCancel">Отмена</button>' +
-      '<button class="mng-btn gold" id="coOk" style="flex:1.7;padding:13px">Подтвердить выдачу</button>' +
+    /* ---- шаг 1: ввод ---- */
+    '<div id="coStep1">' +
+      '<h2 style="margin-bottom:2px">Изъятие кассы</h2>' +
+      '<div class="who">Текущий остаток наличных: <b>' + rub(bal) + '</b></div>' +
+      '<hr class="mng-hr">' +
+      '<label class="mng-lbl">Сумма изъятия, ₽</label>' +
+      '<div style="display:flex;gap:8px">' +
+        '<input class="mng-inp" id="coSum" type="text" inputmode="numeric" placeholder="0" autocomplete="off" style="flex:1">' +
+        '<button class="mng-btn" id="coAll" style="flex:none">Вся сумма</button>' +
+      '</div>' +
+      '<label class="mng-lbl">Категория операции</label>' +
+      '<div class="mc-seg" id="coCat">' +
+        '<button type="button" data-cat="cost" class="on">Затраты</button>' +
+        '<button type="button" data-cat="profit">Прибыль</button>' +
+      '</div>' +
+      '<div id="coCostWrap">' +
+        '<label class="mng-lbl">Статья расходов</label>' +
+        '<select class="mng-sel" id="coArt" style="width:100%;padding:11px 12px;font-size:15px">' +
+          '<option value="">— выберите статью —</option>' +
+          CASH_ARTS.map(function(a){ return '<option>' + esc(a) + '</option>'; }).join('') +
+        '</select>' +
+        '<label class="mng-lbl">Получатель денежных средств</label>' +
+        '<input class="mng-inp" id="coWho" list="coSpecs" placeholder="Кому выдаются деньги" autocomplete="off"><datalist id="coSpecs">' + specsDl + '</datalist>' +
+        '<label class="mng-lbl">Комментарий (необязательно)</label>' +
+        '<input class="mng-inp" id="coComm" placeholder="Примечание к операции" autocomplete="off">' +
+      '</div>' +
+      '<div class="mc-after">Остаток после изъятия: <b id="coAfterSum">' + rub(bal) + '</b></div>' +
+      '<div class="mng-err" id="coErr" style="display:none"></div>' +
+      '<div class="mng-actions">' +
+        '<button class="mng-btn" id="coCancel">Отмена</button>' +
+        '<button class="mng-btn gold" id="coNext" style="flex:1.7;padding:13px">Продолжить</button>' +
+      '</div>' +
+    '</div>' +
+    /* ---- шаг 2: подтверждение ---- */
+    '<div id="coStep2" style="display:none">' +
+      '<h2 style="margin-bottom:2px">Подтверждение изъятия</h2>' +
+      '<div class="who">Проверьте данные операции перед списанием</div>' +
+      '<hr class="mng-hr">' +
+      '<div class="mng-kv" id="coCf"></div>' +
+      '<div class="mng-actions">' +
+        '<button class="mng-btn" id="coBack">Отмена</button>' +
+        '<button class="mng-btn gold" id="coDo" style="flex:1.7;padding:13px">Подтвердить изъятие</button>' +
+      '</div>' +
     '</div>' +
   '</div>';
   root.appendChild(ovl);
@@ -1596,30 +1648,78 @@ function openCashOut(){
   document.getElementById('coCancel').onclick = function(){ ovl.remove(); };
   ovl.onclick = function(e){ if (e.target === ovl) ovl.remove(); };
   setTimeout(function(){ document.getElementById('coSum').focus(); }, 80);
-  /* идентификатор операции: повторная отправка (двойной тап, обрыв сети) не спишет деньги дважды */
+
+  var sumEl = document.getElementById('coSum');
+  var curSum = function(){ return parseInt((sumEl.value || '').replace(/[^\d]/g, ''), 10) || 0; };
+  var updAfter = function(){
+    var v = curSum();
+    document.getElementById('coAfterSum').textContent = rub(Math.max(0, bal - Math.min(v, bal)));
+  };
+  sumEl.oninput = updAfter;
+  document.getElementById('coAll').onclick = function(){ sumEl.value = String(bal); updAfter(); };
+  /* переключатель категории: прибыль — без статьи/получателя */
+  var cat = 'cost';
+  Array.prototype.forEach.call(document.getElementById('coCat').querySelectorAll('button'), function(b){
+    b.onclick = function(){
+      cat = b.dataset.cat;
+      Array.prototype.forEach.call(document.getElementById('coCat').querySelectorAll('button'), function(x){ x.className = x.dataset.cat === cat ? 'on' : ''; });
+      document.getElementById('coCostWrap').style.display = cat === 'cost' ? '' : 'none';
+      updAfter();
+    };
+  });
+  /* идентификатор операции: повторная отправка (двойной тап, обрыв сети) не спишет дважды */
   var op = 'co-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-  document.getElementById('coOk').onclick = function(){
+
+  document.getElementById('coNext').onclick = function(){
     var err = document.getElementById('coErr');
     var show = function(m){ err.style.display = 'block'; err.textContent = m; };
     err.style.display = 'none';
-    var v = parseInt((document.getElementById('coSum').value || '').replace(/[^\d]/g, ''), 10);
+    var v = curSum();
     var who = document.getElementById('coWho').value.trim();
-    var purp = document.getElementById('coPurp').value.trim();
+    var art = document.getElementById('coArt').value;
     var comm = document.getElementById('coComm').value.trim();
-    if (isNaN(v) || v <= 0) return show('Укажите сумму выдачи.');
-    if (v > ((S.cash || {}).balance || 0)) return show('Сумма превышает остаток наличных в кассе (' + rub((S.cash || {}).balance || 0) + ').');
-    if (!who) return show('Укажите получателя денежных средств.');
-    if (!purp) return show('Укажите назначение расхода.');
+    if (v <= 0) return show('Укажите сумму изъятия (от 1 ₽).');
+    if (v > bal) return show('Сумма превышает текущий остаток кассы (' + rub(bal) + ').');
+    if (cat === 'cost') {
+      if (!art) return show('Выберите статью расходов.');
+      if (!who) return show('Укажите получателя денежных средств.');
+    }
+    /* шаг 2 — сводка перед списанием */
+    var rows = [['Текущий остаток кассы', rub(bal)],
+                ['Сумма изъятия', rub(v)],
+                ['Категория операции', cat === 'profit' ? 'Прибыль' : 'Затраты']];
+    if (cat === 'cost') rows.push(['Статья расходов', art], ['Получатель', who]);
+    if (comm) rows.push(['Комментарий', comm]);
+    rows.push(['Остаток после операции', rub(bal - v)]);
+    document.getElementById('coCf').innerHTML = rows.map(function(r, i){
+      var hot = (i === rows.length - 1) ? ' hot' : '';
+      return '<div class="mng-kr' + hot + '"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>';
+    }).join('');
+    document.getElementById('coStep1').style.display = 'none';
+    document.getElementById('coStep2').style.display = '';
+  };
+  document.getElementById('coBack').onclick = function(){
+    document.getElementById('coStep2').style.display = 'none';
+    document.getElementById('coStep1').style.display = '';
+  };
+  document.getElementById('coDo').onclick = function(){
     var btn = this;
     btn.disabled = true; btn.textContent = 'Проводим…';
-    api(null, {action:'cash_payout', amount:v, receiver:who, purpose:purp, comment:comm, op:op}).then(function(j){
+    var v = curSum();
+    api(null, {action:'cash_payout', amount:v, cat:cat,
+               article: cat === 'cost' ? document.getElementById('coArt').value : '',
+               receiver: cat === 'cost' ? document.getElementById('coWho').value.trim() : '',
+               comment: cat === 'cost' ? document.getElementById('coComm').value.trim() : '', op:op}).then(function(j){
       if (j.cash) { S.cash = j.cash; S.cashStamp = cashStamp(j.cash); }
       ovl.remove();
-      toast('💸 Выдано из кассы: ' + rub(v));
+      toast('💸 Изъято из кассы: ' + rub(v) + (cat === 'profit' ? ' (прибыль)' : ''));
       if (S.view === 'bal') renderBal();
     }).catch(function(e){
-      btn.disabled = false; btn.textContent = 'Подтвердить выдачу';
-      show(e.msg || 'Не удалось провести операцию.');
+      btn.disabled = false; btn.textContent = 'Подтвердить изъятие';
+      document.getElementById('coStep2').style.display = 'none';
+      document.getElementById('coStep1').style.display = '';
+      var err = document.getElementById('coErr');
+      err.style.display = 'block'; err.textContent = e.msg || 'Не удалось провести операцию.';
     });
   };
 }
@@ -1876,7 +1976,7 @@ var EV_META = {
   lead_delete:   {i:'🗑️', c:'red',    ru:'Удаление заявки'},
   lead_done:     {i:'📨', c:'blue',   ru:'Заявка обработана'},
   cash_opening:  {i:'🏦', c:'green',  ru:'Касса: начальный остаток'},
-  cash_payout:   {i:'💸', c:'orange', ru:'Касса: выдача наличных'}
+  cash_payout:   {i:'💸', c:'orange', ru:'Касса: изъятие наличных'}
 };
 var EV_C_HEX = {green:'#6d9350', blue:'#7d8ca8', orange:'#c27a3a', red:'#b3543f', gray:'#8a8578', amber:'#c1912f'};
 var SRC_RU = {panel:'Админ-панель', app:'Приложение', web:'Браузер', site:'Сайт', dikidi:'DIKIDI'};

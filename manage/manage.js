@@ -231,7 +231,7 @@ function boot(){
   pushBridge();
   var pContent = fetch(CONTENT).then(function(r){ return r.json(); }).catch(function(){ return {prices:[]}; });
   pContent.then(function(c){
-    S.dirs = (c.prices || []).map(function(x){ return {cat:x.cat, rows:(x.rows||[]).map(function(r){ return r[0]; })}; });
+    S.dirs = (c.prices || []).map(function(x){ var pr = {}; (x.rows||[]).forEach(function(r){ var p = parseInt(String(r[1]||'').replace(/[^\d]/g,''),10); pr[r[0]] = isNaN(p) ? null : p; }); return {cat:x.cat, rows:(x.rows||[]).map(function(r){ return r[0]; }), price:pr}; });
     return api('action=state&since=0');
   }).then(function(j){
     S.version = j.version;
@@ -499,6 +499,23 @@ function dateStrip(){
 }
 /* направления (категории услуг) из прайса */
 function allDirs(){ return S.dirs.map(function(d){ return d.cat; }); }
+function svcLine(it){ return (it.services && it.services.length) ? it.services.join(' + ') : (it.service || ''); }
+/* ---- Солярий: отдельный режим ---- */
+var SOL_DIR = 'Солярий';
+var SOL_SERVICES = ['Солярий синий', 'Солярий оранжевый', 'Крем'];
+var SOL_SPECS = ['Солярий синий', 'Солярий оранжевый'];
+function solDirObj(){ return S.dirs.filter(function(x){ return x.cat === SOL_DIR; })[0]; }
+function solMinPrice(){ var d = solDirObj(); var p = d && d.price ? d.price['Солярий 1 минута'] : null; return p || 50; }
+function solCreamPrice(){ var d = solDirObj(); var p = d && d.price ? (d.price['Крем для солярия'] != null ? d.price['Крем для солярия'] : d.price['Крем']) : null; return p || 200; }
+function svcPrice(dirCat, name, durMin){
+  if (dirCat === SOL_DIR) {
+    if (name === 'Крем') return solCreamPrice();
+    if (SOL_SPECS.indexOf(name) >= 0) return solMinPrice() * (durMin || 10);
+    return null;
+  }
+  var d = S.dirs.filter(function(x){ return x.cat === dirCat; })[0];
+  return d && d.price ? d.price[name] : null;
+}
 function dirInList(dir){ return allDirs().indexOf(dir) >= 0; }
 function specInList(sp){ return !!sp && S.meta.specialists.indexOf(sp) >= 0; }
 var TINT_HEX = {rose:'#a95d6d', olive:'#8f9457', gold:'#c9a24b', lilac:'#9580a8'};
@@ -683,8 +700,10 @@ function evHtml(it, narrow, posStyle, showSpec){
   var cmp = S.ui.compact;
   var pos = posStyle || '';
   var sub = showSpec ? (it.spec ? ' · ' + esc(it.spec) : '') : (it.phone ? ' · ' + esc(it.phone) : '');
+  var sv = svcLine(it);
+  if ((narrow || cmp) && it.services && it.services.length > 1) sv = it.services[0] + ' +' + (it.services.length - 1);
   return '<div class="mng-ev st-' + st + tint + (cmp ? ' diminfo' : '') + '" data-bid="' + it.id + '" style="' + pos + 'top:' + ((t2m(it.start) - WORK_START*60)/60*hh()) + 'px;height:' + Math.max(24, (t2m(it.end)-t2m(it.start))/60*hh() - 3) + 'px">' +
-    ico + '<span class="t">' + esc(it.start) + '–' + esc(it.end) + '</span> <b>' + esc(it.service) + '</b>' +
+    ico + '<span class="t">' + esc(it.start) + '–' + esc(it.end) + '</span> <b>' + esc(sv) + '</b>' +
     (narrow || cmp ? '' : '<small>' + esc(it.client) + sub + '</small>') +
     '</div>';
 }
@@ -977,7 +996,7 @@ function renderListHtml(){
     h += '<div class="mng-lr' + (off ? ' off' : '') + '" data-bid="' + it.id + '">' +
       '<div class="lt">' + esc(it.start) + '<br><span style="color:var(--mut);font-weight:700">' + esc(it.end) + '</span></div>' +
       '<div class="li"><div class="ln">' + esc(it.client || 'Клиент') + '</div>' +
-      '<div class="ls">' + esc(it.service) + '</div></div>' +
+      '<div class="ls">' + esc(svcLine(it)) + '</div></div>' +
       '<div class="lsp"><span class="dot" style="background:' + specColor(it.spec) + '"></span>' + esc(it.spec) + '</div>' +
       '<span class="mng-st stt-' + it.status + '">' + ST_SHORT[it.status] + '</span></div>';
   });
@@ -1108,17 +1127,33 @@ function openCard(bid, soft, prefill){
   var ovl = document.createElement('div');
   ovl.className = 'mng-ovl'; ovl.id = 'mngOvl';
 
-  var durOpts = '';
+  function durOptsFor(dirCat, cur){
+    var o = '', d;
+    if (dirCat === SOL_DIR) {
+      if (!cur || cur < 1 || cur > 30) cur = 10;
+      for (d = 1; d <= 30; d++) o += '<option value="' + d + '"' + (cur===d?' selected':'') + '>' + d + ' мин</option>';
+      return o;
+    }
+    for (d = 30; d <= 480; d += 30) o += '<option value="' + d + '"' + (cur===d?' selected':'') + '>' + (d>=60 ? Math.floor(d/60) + ' ч' + (d%60?' '+(d%60)+' мин':'') : d + ' мин') + '</option>';
+    if ([30,60,90,120,150,180,210,240,270,300,330,360,390,420,450,480].indexOf(cur) < 0 && cur > 0)
+      o = '<option value="' + cur + '" selected>' + cur + ' мин</option>' + o;
+    return o;
+  }
+  function specOptsFor(dirCat, sel){
+    if (dirCat === SOL_DIR)
+      return SOL_SPECS.map(function(s){ return '<option' + (sel===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
+    var o = S.meta.specialists.map(function(s){ return '<option' + (sel===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
+    if (sel && S.meta.specialists.indexOf(sel) < 0) o = '<option selected>' + esc(sel) + '</option>' + o;
+    return o;
+  }
   var curDur = t2m(it.end) - t2m(it.start);
-  for (var d = 30; d <= 480; d += 30) durOpts += '<option value="' + d + '"' + (curDur===d?' selected':'') + '>' + (d>=60 ? Math.floor(d/60) + ' ч' + (d%60?' '+(d%60)+' мин':'') : d + ' мин') + '</option>';
-  if ([30,60,90,120,150,180,210,240,270,300,330,360,390,420,450,480].indexOf(curDur) < 0 && curDur > 0)
-    durOpts = '<option value="' + curDur + '" selected>' + curDur + ' мин</option>' + durOpts;
+  var durOpts = durOptsFor(it.dir, curDur);
   var timeOpts = '';
   var onGrid = false;
   for (var tm = WORK_START*60; tm <= WORK_END*60-15; tm += 15) { if (it.start === m2t(tm)) onGrid = true; timeOpts += '<option' + (it.start===m2t(tm)?' selected':'') + '>' + m2t(tm) + '</option>'; }
   if (!onGrid) timeOpts = '<option selected>' + esc(it.start) + '</option>' + timeOpts;
   var dirOpts = S.dirs.map(function(dd){ return '<option' + (it.dir===dd.cat?' selected':'') + '>' + esc(dd.cat) + '</option>'; }).join('');
-  var specOpts = '<option value="">— без специалиста —</option>' + S.meta.specialists.map(function(s){ return '<option' + (it.spec===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
+  var specOpts = specOptsFor(it.dir, it.spec);
 
   var hist = (it.history || []).slice().reverse().map(function(h){
     var d = new Date(h.t*1000);
@@ -1134,7 +1169,7 @@ function openCard(bid, soft, prefill){
     '<div class="mng-grip" id="mcGrip"></div>' +
     '<button class="mng-x" id="mcX">✕</button>' +
     '<div class="dt">' + esc(dRus(it.date)) + ' · ' + esc(it.start) + '–' + esc(it.end) + ' &nbsp;<span class="mng-st stt-' + st + '">' + ST_RU[st] + '</span></div>' +
-    '<h2>' + (isNew ? 'Новая запись' : esc(it.service)) + '</h2>' +
+    '<h2>' + (isNew ? 'Новая запись' : esc(svcLine(it))) + '</h2>' +
     (isNew ? '' : '<div class="who">Специалист: ' + esc(it.spec) + '<br>Клиент: ' + esc(it.client || '—') +
       (it.phone ? ' · <a href="tel:' + esc(it.phone) + '" style="color:inherit;font-weight:700">' + esc(it.phone) + '</a>' : '') + '</div>') +
 
@@ -1146,7 +1181,9 @@ function openCard(bid, soft, prefill){
       '<div><label class="mng-lbl">Длительность</label><select class="mng-inp" id="mcDur">' + durOpts + '</select></div>' +
       '<div><label class="mng-lbl">Специалист</label><select class="mng-inp" id="mcSpec">' + specOpts + '</select></div>' +
       '<div class="full"><label class="mng-lbl">Направление</label><select class="mng-inp" id="mcDir">' + dirOpts + '</select></div>' +
-      '<div class="full"><label class="mng-lbl">Услуга</label><select class="mng-inp" id="mcServ"></select></div>' +
+      '<div class="full"><label class="mng-lbl">Услуги</label><div id="mcSvcList"></div>' +
+      '<button type="button" class="mng-btn sm" id="mcSvcAdd" style="margin-top:2px">+ Добавить услугу</button>' +
+      '<div class="mng-svcprice" id="mcSvcPrice" style="display:none"></div></div>' +
       '<div><label class="mng-lbl">Клиент</label><input class="mng-inp" id="mcClient" maxlength="80" value="' + esc(it.client) + '" placeholder="Имя клиента"></div>' +
       '<div><label class="mng-lbl">Телефон</label><input class="mng-inp" id="mcPhone" maxlength="30" value="' + esc(it.phone) + '" placeholder="+7 …"></div>' +
       '<div class="full"><label class="mng-lbl">Комментарий</label><input class="mng-inp" id="mcComm" maxlength="500" value="' + esc(it.comment) + '" placeholder="Пожелания, детали…"></div>' +
@@ -1167,6 +1204,7 @@ function openCard(bid, soft, prefill){
     '</div>' +
     '<label class="mng-lbl">Вознаграждение специалисту, ₽</label>' +
     '<input class="mng-inp" id="mcReward" type="number" min="0" step="100" value="' + (it.reward!=null?it.reward:'') + '" placeholder="Ещё не рассчитаны">' +
+    '<label class="mng-check' + (it.reward===0?'':' off') + '" id="mcNoRewW" style="margin-top:8px"><input type="checkbox" id="mcNoRew"' + (it.reward===0?' checked':'') + '><span>Без оплаты специалисту</span></label>' +
     '<hr class="mng-hr">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="color:var(--mut)">Остаток салона</span><span class="mng-rest" id="mcRest">' + rub(rest) + '</span></div>' +
     (st==='done' ? '<div class="mng-okline">✓ Запись полностью завершена</div>' : '') +
@@ -1184,28 +1222,76 @@ function openCard(bid, soft, prefill){
   S.dirty = false;
 
   var $ = function(id){ return document.getElementById(id); };
-  /* услуги по направлению */
-  function fillServ(sel){
-    var dir = S.dirs.filter(function(x){ return x.cat === $('mcDir').value; })[0];
-    var list = dir ? dir.rows : [];
-    $('mcServ').innerHTML = list.map(function(s){ return '<option' + (s===sel?' selected':'') + '>' + esc(s) + '</option>'; }).join('') +
-      (sel && list.indexOf(sel)<0 ? '<option selected>' + esc(sel) + '</option>' : '') +
-      '<option value="">— другое (вписать) —</option>';
+  /* ---- услуги: мульти-строки ---- */
+  function svcNames(){
+    var out = [];
+    Array.prototype.forEach.call(ovl.querySelectorAll('#mcSvcList select'), function(s){
+      var v = (s.value || '').trim(); if (v && out.indexOf(v) < 0) out.push(v);
+    });
+    return out;
   }
-  fillServ(it.service);
-  $('mcDir').onchange = function(){ fillServ(''); markDirty(); renderFree(); };
-  $('mcServ').onchange = function(){
-    var selEl = this;
-    if (selEl.value === '') {
-      askInput('Своя услуга', 'Название услуги', function(nm){
-        if (nm) selEl.insertAdjacentHTML('beforeend', '<option selected>' + esc(nm) + '</option>');
-        else fillServ('');
-        markDirty();
-      });
-      return;
-    }
-    markDirty();
-  };
+  function updSvcPrice(){
+    var box = $('mcSvcPrice'); if (!box) return;
+    var names = svcNames();
+    if (!names.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var dur = +$('mcDur').value || 60, dirCat = $('mcDir').value;
+    var sum = 0, unknown = [];
+    names.forEach(function(n){ var p = svcPrice(dirCat, n, dur); if (p == null) unknown.push(n); else sum += p; });
+    box.innerHTML = 'По прайсу: <b>' + rub(sum) + '</b>' +
+      (unknown.length ? ' <span style="color:var(--mut)">+ «' + esc(unknown.join('», «')) + '» — нет цены в прайсе</span>' : '') +
+      ' <button type="button" class="mng-btn sm" id="mcSvcToAmt" style="margin-left:auto">В «Получено»</button>';
+    box.style.display = 'flex';
+    $('mcSvcToAmt').onclick = function(){ $('mcAmount').value = sum; updRest(); markDirty(); };
+  }
+  function fillServSelect(selEl, sel){
+    var dirCat = $('mcDir').value, list;
+    if (dirCat === SOL_DIR) list = SOL_SERVICES.slice();
+    else { var dir = S.dirs.filter(function(x){ return x.cat === dirCat; })[0]; list = dir ? dir.rows.slice() : []; }
+    var h = list.map(function(s){ return '<option' + (s===sel?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
+    if (sel && list.indexOf(sel) < 0) h += '<option selected>' + esc(sel) + '</option>';
+    if (dirCat !== SOL_DIR) h += '<option value="">— другое (вписать) —</option>';
+    selEl.innerHTML = h;
+  }
+  function bindSvcRow(row){
+    var selEl = row.querySelector('select');
+    selEl.addEventListener('change', function(){
+      if (selEl.value === '') {
+        askInput('Своя услуга', 'Название услуги', function(nm){
+          if (nm) selEl.insertAdjacentHTML('beforeend', '<option selected>' + esc(nm) + '</option>');
+          else fillServSelect(selEl, '');
+          markDirty(); updSvcPrice();
+        });
+        return;
+      }
+      markDirty(); updSvcPrice();
+    });
+    var del = row.querySelector('.mng-svcdel');
+    if (del) del.onclick = function(){ row.remove(); markDirty(); updSvcPrice(); };
+  }
+  function addSvcRow(sel){
+    var list = $('mcSvcList');
+    var row = document.createElement('div');
+    row.className = 'mng-svcrow';
+    row.innerHTML = '<select class="mng-inp"></select><button type="button" class="mng-svcdel" title="Убрать услугу">✕</button>';
+    if (!list.children.length) row.querySelector('.mng-svcdel').style.display = 'none'; /* первую услугу не удаляем */
+    list.appendChild(row);
+    fillServSelect(row.querySelector('select'), sel || '');
+    bindSvcRow(row);
+    return row;
+  }
+  var initSvcs = (it.services && it.services.length) ? it.services.slice() : (it.service ? [it.service] : ['']);
+  initSvcs.forEach(function(sv){ addSvcRow(sv); });
+  updSvcPrice();
+  $('mcSvcAdd').onclick = function(){ addSvcRow(''); markDirty(); };
+  function refillSvcSelects(){
+    Array.prototype.forEach.call(ovl.querySelectorAll('#mcSvcList select'), function(s){
+      var v = s.value; fillServSelect(s, '');
+      if (v && Array.prototype.some.call(s.options, function(o){ return o.text === v; })) s.value = v;
+    });
+  }
+  function fillSpec(){ var keep = $('mcSpec').value; $('mcSpec').innerHTML = specOptsFor($('mcDir').value, keep); }
+  function fillDur(){ var keep = +$('mcDur').value; $('mcDur').innerHTML = durOptsFor($('mcDir').value, keep); }
+  $('mcDir').onchange = function(){ refillSvcSelects(); fillSpec(); fillDur(); markDirty(); renderFree(); updSvcPrice(); };
   /* свободные окна: на основании существующих записей специалиста */
   function renderFree(){
     var box = $('mcFree'); if (!box) return;
@@ -1221,7 +1307,8 @@ function openCard(bid, soft, prefill){
     });
   }
   renderFree();
-  $('mcDate').onchange = renderFree; $('mcSpec').onchange = renderFree; $('mcDur').onchange = renderFree;
+  $('mcDate').onchange = renderFree; $('mcSpec').onchange = renderFree;
+  $('mcDur').onchange = function(){ renderFree(); updSvcPrice(); };
 
   function markDirty(){ S.dirty = true; }
   Array.prototype.forEach.call(ovl.querySelectorAll('input,select'), function(el){ el.addEventListener('change', markDirty); el.addEventListener('input', markDirty); });
@@ -1237,6 +1324,17 @@ function openCard(bid, soft, prefill){
     $('mcRest').textContent = rub(a - r);
   }
   $('mcAmount').oninput = updRest; $('mcReward').oninput = updRest;
+  /* тумблер «Без оплаты специалисту» */
+  function applyNoRew(){
+    var on = $('mcNoRew').checked;
+    $('mcReward').disabled = on;
+    if (on) $('mcReward').value = '0';
+    else if ($('mcReward').value === '0') $('mcReward').value = '';
+    $('mcNoRewW').className = 'mng-check' + (on ? '' : ' off');
+    updRest(); markDirty();
+  }
+  $('mcNoRew').onchange = applyNoRew;
+  if ($('mcNoRew').checked) applyNoRew();
 
   $('mcX').onclick = function(){ ovl.remove(); S.dirty = false; };
   ovl.onclick = function(e){ if (e.target === ovl) { ovl.remove(); S.dirty = false; } };
@@ -1267,6 +1365,7 @@ function openCard(bid, soft, prefill){
     var dur = editVisible ? +$('mcDur').value : (t2m(it.end) - t2m(it.start));
     var endM = t2m(start) + dur; if (endM > WORK_END*60) endM = WORK_END*60;
     var payEl = ovl.querySelector('input[name="mcPay"]:checked');
+    var svcs = editVisible ? svcNames() : ((it.services && it.services.length) ? it.services.slice() : (it.service ? [it.service] : []));
     return {
       id: it.id,
       date: editVisible ? $('mcDate').value : it.date,
@@ -1274,13 +1373,14 @@ function openCard(bid, soft, prefill){
       client: editVisible ? $('mcClient').value.trim() : it.client,
       phone: editVisible ? $('mcPhone').value.trim() : it.phone,
       dir: editVisible ? $('mcDir').value : it.dir,
-      service: editVisible ? $('mcServ').value : it.service,
+      service: svcs.length ? svcs[0] : (editVisible ? '' : it.service),
+      services: svcs,
       spec: editVisible ? $('mcSpec').value : it.spec,
       comment: editVisible ? $('mcComm').value.trim() : it.comment,
       done: $('mcDone').checked ? 1 : 0,
       amount: $('mcAmount').value === '' ? null : Math.max(0, parseInt($('mcAmount').value, 10) || 0),
       pay: payEl ? payEl.value : null,
-      reward: $('mcReward').value === '' ? null : Math.max(0, parseInt($('mcReward').value, 10) || 0),
+      reward: $('mcNoRew').checked ? 0 : ($('mcReward').value === '' ? null : Math.max(0, parseInt($('mcReward').value, 10) || 0)),
       state: it.state || ''
     };
   }
@@ -1307,7 +1407,7 @@ function openCard(bid, soft, prefill){
   var n = $('mcNoShow'); if (n) n.onclick = function(){ askYes('Клиент не пришёл', 'Клиент не пришёл? Запись будет закрыта без сумм.', 'Клиент не пришёл', function(){ doSave({state:'noshow'}); }); };
   var r2 = $('mcReopen'); if (r2) r2.onclick = function(){ doSave({state:''}); };
   var del = $('mcDel'); if (del) del.onclick = function(){
-    askYes('Удаление записи', 'Удалить запись «' + it.service + ' · ' + dRus(it.date) + ' ' + it.start + '»?\n\nЗапись исчезнет из календаря и баланса у всех участников. Полные сведения и кто удалил — сохранятся в разделе «История».', 'Удалить', function(){
+    askYes('Удаление записи', 'Удалить запись «' + svcLine(it) + ' · ' + dRus(it.date) + ' ' + it.start + '»?\n\nЗапись исчезнет из календаря и баланса у всех участников. Полные сведения и кто удалил — сохранятся в разделе «История».', 'Удалить', function(){
       api(null, {action:'delete', id:it.id}).then(function(j){ S.version = j.version; delete S.items[it.id]; ovl.remove(); refreshViews(); updateBadges(); toast('Запись удалена'); }).catch(function(e){ toast(e.msg||'Ошибка'); });
     });
   };
@@ -1323,7 +1423,7 @@ function showUnfinished(){
   ovl.className = 'mng-ovl'; ovl.id = 'mngOvl';
   var rows = list.map(function(it){
     return '<div class="mng-unf" data-bid="' + it.id + '">' +
-      '<div style="flex:1"><b>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</b> · ' + esc(it.service) + ' · ' + esc(it.spec) +
+      '<div style="flex:1"><b>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</b> · ' + esc(svcLine(it)) + ' · ' + esc(it.spec) +
       '<div class="r">' + it.unfinished.map(esc).join(' · ') + '</div></div>→</div>';
   }).join('');
   ovl.innerHTML = '<div class="mng-card"><div class="mng-grip"></div><button class="mng-x" id="muX">✕</button>' +
@@ -1392,7 +1492,7 @@ function renderBal(){
   });
   gorder.sort(function(x, y){ return gmap[y].a - gmap[x].a; });
   var occRow = function(it){
-    return '<tr class="r" data-bid="' + it.id + '"><td>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</td><td>' + esc(it.service) + '</td><td>' + esc(it.spec || '—') + '</td>' +
+    return '<tr class="r" data-bid="' + it.id + '"><td>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</td><td>' + esc(svcLine(it)) + '</td><td>' + esc(it.spec || '—') + '</td>' +
       '<td>' + (it.amount!=null?rub(it.amount):'—') + '</td><td>' + (it.pay?PAY_RU[it.pay]:'—') + '</td><td>' + (it.reward!=null?rub(it.reward):'—') + '</td>' +
       '<td>' + (it.amount!=null||it.reward!=null ? rub((it.amount||0)-(it.reward||0)) : '—') + '</td></tr>';
   };

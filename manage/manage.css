@@ -422,3 +422,12 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
 .mng-bgrp .gc{color:var(--mut);font-size:12px;font-weight:700}
 .mng-bgrp .ga{margin-left:auto;color:var(--wine);font-size:14.5px}
 .mng-bgrp .mng-table{margin:0 10px 10px;width:calc(100% - 20px)}
+
+/* мульти-услуги в карточке записи */
+.mng-svcrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.mng-svcrow select{flex:1;min-width:0}
+.mng-svcdel{flex:0 0 auto;width:36px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--red);font-size:14px;font-weight:700;cursor:pointer}
+.mng-svcdel:active{transform:scale(.94)}
+.mng-svcprice{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:9px 12px;border-radius:12px;background:var(--bg);border:1.5px solid var(--line);font-size:13px;color:var(--text)}
+.mng-svcprice b{font-size:14px}
+#klioManage .mng-inp:disabled{opacity:.55;background:var(--bg)}

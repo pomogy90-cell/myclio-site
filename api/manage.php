@@ -77,7 +77,7 @@ function book_info($it){
 /* снимок записи для журнала (все поля, включая финансы) */
 function book_snap($it){
     $s = [];
-    foreach (['date','start','end','client','phone','dir','service','spec','comment','done','amount','pay','reward','state'] as $k)
+    foreach (['date','start','end','client','phone','dir','service','services','spec','comment','done','amount','pay','reward','state'] as $k)
         $s[$k] = $it[$k] ?? null;
     return $s;
 }
@@ -341,6 +341,19 @@ if ($action === 'save') {
     if ($serv === '') out(['ok'=>false,'err'=>'Укажите услугу.'], 400);
     if ($spec === '') out(['ok'=>false,'err'=>'Укажите специалиста.'], 400);
 
+    /* мульти-услуги: services[] — полный список, service — первая (основная) */
+    $services = [];
+    if (isset($body['services']) && is_array($body['services'])) {
+        foreach ($body['services'] as $sv) {
+            $sv = mb_substr(trim((string)$sv), 0, 120);
+            if ($sv !== '' && !in_array($sv, $services, true)) $services[] = $sv;
+            if (count($services) >= 10) break;
+        }
+    }
+    if (!$services) $services = [$serv];
+    if ($services[0] !== $serv) $serv = $services[0];
+    $svcLine = implode(' + ', $services);
+
     $done   = !empty($body['done']) ? 1 : 0;
     $amount = $body['amount'] ?? null;
     $amount = ($amount === '' || $amount === null) ? null : max(0, (int)$amount);
@@ -356,7 +369,7 @@ if ($action === 'save') {
         $b['seq']++;
         $it = [
             'id'=>'b' . $b['seq'], 'date'=>$date, 'start'=>$start, 'end'=>$end,
-            'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'spec'=>$spec, 'comment'=>$comm,
+            'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'services'=>$services, 'spec'=>$spec, 'comment'=>$comm,
             'done'=>$done, 'amount'=>$amount, 'pay'=>$pay, 'reward'=>$reward, 'state'=>$state,
             'history'=>[['t'=>$now, 'u'=>$user, 'm'=>'Создана запись']],
             'v'=>$ver,
@@ -364,7 +377,7 @@ if ($action === 'save') {
         $b['items'][] = $it;
         book_save($b);
         hist_log('create', 'booking', $it['id'], 'Создана запись', book_info($it), $user, $me['src'],
-            ['client'=>$client, 'phone'=>$phone, 'spec'=>$spec, 'service'=>$serv,
+            ['client'=>$client, 'phone'=>$phone, 'spec'=>$spec, 'service'=>$svcLine,
              'after'=>book_snap($it), 'snap'=>book_snap($it)]);
         out(['ok'=>true, 'version'=>$ver, 'item'=>pub_item($it, $now)]);
     }
@@ -379,7 +392,8 @@ if ($action === 'save') {
     $dRus = function($d){ $t = strtotime($d); return $t ? date('d.m.Y', $t) : $d; };
     if ($old['date'] !== $date || $old['start'] !== $start || $old['end'] !== $end)
         $hist[] = 'Изменено время: ' . $dRus($date) . ' ' . $start . '–' . $end;
-    if (($old['service'] ?? '') !== $serv) $hist[] = 'Изменена услуга: ' . $serv;
+    $oldSvcLine = (isset($old['services']) && is_array($old['services']) && $old['services']) ? implode(' + ', $old['services']) : (string)($old['service'] ?? '');
+    if ($oldSvcLine !== $svcLine) $hist[] = ($oldSvcLine === '' ? 'Указана услуга: ' : 'Изменены услуги: ') . $svcLine;
     if (($old['spec'] ?? '') !== $spec) $hist[] = 'Изменён специалист: ' . $spec;
     if (($old['client'] ?? '') !== $client) $hist[] = 'Изменён клиент: ' . $client;
     if (($old['phone'] ?? '') !== $phone) $hist[] = 'Изменён телефон';
@@ -400,7 +414,7 @@ if ($action === 'save') {
     $it = $old;
     $it['date'] = $date; $it['start'] = $start; $it['end'] = $end;
     $it['client'] = $client; $it['phone'] = $phone; $it['comment'] = $comm;
-    $it['dir'] = $dir; $it['service'] = $serv; $it['spec'] = $spec;
+    $it['dir'] = $dir; $it['service'] = $serv; $it['services'] = $services; $it['spec'] = $spec;
     $it['done'] = $done; $it['amount'] = $amount; $it['pay'] = $pay; $it['reward'] = $reward; $it['state'] = $state;
     $it['v'] = $ver;
     foreach ($hist as $m) $it['history'][] = ['t'=>$now, 'u'=>$user, 'm'=>$m];
@@ -410,15 +424,15 @@ if ($action === 'save') {
     book_save($b);
 
     /* ----- типизированные события в журнал «История действий» ----- */
-    $evBase = ['client'=>$client, 'phone'=>$phone, 'spec'=>$spec, 'service'=>$serv];
+    $evBase = ['client'=>$client, 'phone'=>$phone, 'spec'=>$spec, 'service'=>$svcLine];
     $evInfo = book_info($it);
     $evs = []; /* [type, title, before, after, fin] */
     if ($old['date'] !== $date || $old['start'] !== $start || $old['end'] !== $end)
         $evs[] = ['reschedule', 'Перенос записи',
             ['Дата'=>$dRus($old['date']), 'Время'=>$old['start'] . '–' . $old['end']],
             ['Дата'=>$dRus($date), 'Время'=>$start . '–' . $end], 0];
-    if (($old['service'] ?? '') !== $serv)
-        $evs[] = ['service_change', 'Изменена услуга', ['Услуга'=>$old['service'] ?? ''], ['Услуга'=>$serv], 0];
+    if ($oldSvcLine !== $svcLine)
+        $evs[] = ['service_change', 'Изменены услуги', ['Услуги'=>$oldSvcLine], ['Услуги'=>$svcLine], 0];
     if (($old['spec'] ?? '') !== $spec)
         $evs[] = ['spec_change', 'Изменён специалист', ['Специалист'=>$old['spec'] ?? ''], ['Специалист'=>$spec], 0];
     $miscB = []; $miscA = [];

@@ -822,8 +822,8 @@ if ($page === 'salon') {
     echo '<style>.main{max-width:100%}</style>',
          '<h1>Управление салоном<small>Календарь записей, расчёты, баланс — всё синхронизировано с приложением команды</small></h1>',
          '<div id="klioManage" data-token="' . e($tok) . '"></div>',
-         '<link rel="stylesheet" href="/manage/manage.css?v=7">',
-         '<script src="/manage/manage.js?v=7"></script>';
+         '<link rel="stylesheet" href="/manage/manage.css?v=8">',
+         '<script src="/manage/manage.js?v=8"></script>';
 }
 
 /* ================= ПАРОЛЬ ================= */

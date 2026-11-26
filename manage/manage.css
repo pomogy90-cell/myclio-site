@@ -431,3 +431,31 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
 .mng-svcprice{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:9px 12px;border-radius:12px;background:var(--bg);border:1.5px solid var(--line);font-size:13px;color:var(--text)}
 .mng-svcprice b{font-size:14px}
 #klioManage .mng-inp:disabled{opacity:.55;background:var(--bg)}
+
+/* ================= КАССА (блок внизу «Баланса», 27.11-В10) ================= */
+.mng-cash{margin-top:16px;background:var(--card);border:1.5px solid var(--line2);border-radius:16px;padding:14px 14px 12px;box-shadow:0 4px 18px rgba(94,31,40,.05)}
+.mng-cash-t{display:flex;align-items:center;gap:8px;font-family:Marcellus,serif;font-size:19px;color:var(--wine);margin-bottom:10px}
+.mng-cash-t svg{width:22px;height:22px}
+.mng-cash-g{display:grid;grid-template-columns:minmax(270px,.85fr) 1.35fr;gap:12px}
+.mng-cash-l{background:linear-gradient(160deg,#faf5e9,#f3ead6);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.mc-ico{width:128px;color:var(--wine)}
+.mc-ico svg{width:100%;height:auto;display:block}
+.mc-cap{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-top:4px}
+.mc-sum{font-family:Marcellus,serif;font-size:38px;line-height:1.12;color:var(--wine);margin:2px 0 6px}
+.mc-hint{font-size:11.5px;color:var(--mut);margin-top:auto;padding-top:10px;line-height:1.4}
+.mc-first{margin-top:8px;background:#fffdf8;border:1px dashed var(--gold);border-radius:12px;padding:10px 12px;width:100%;text-align:left}
+.mc-first-t{font-weight:800;font-size:13.5px;color:var(--goldd)}
+.mc-first-s{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4}
+.mng-cash-r{background:#fffdf8;border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;min-height:160px}
+.mc-rh{display:flex;justify-content:space-between;align-items:baseline;gap:8px 12px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:800}
+.mc-rh b{color:var(--wine);white-space:nowrap}
+.mc-list{overflow-y:auto;max-height:264px}
+.mc-row{padding:8px 2px;border-bottom:1px dashed var(--line)}
+.mc-row:last-child{border-bottom:0}
+.mc-r1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mc-r1 b{font-size:14px}
+.mc-amt{color:var(--red);font-weight:800;white-space:nowrap}
+.mc-r2{font-size:13px;margin-top:1px}
+.mc-r3{font-size:11.5px;color:var(--mut);margin-top:1px}
+.mc-empty{color:var(--mut);font-size:13px;padding:20px 6px;text-align:center}
+@media (max-width:860px){.mng-cash-g{grid-template-columns:1fr}.mc-list{max-height:230px}.mc-sum{font-size:34px}}

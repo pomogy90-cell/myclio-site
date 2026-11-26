@@ -18,7 +18,9 @@ var S = {
   lastSeen: 0, timer: null, online: true, dirty: false,
   evSeq: 0, notifSeq: 0, leadsCount: 0,
   lst: {q:'', per:'upcoming', spec:'', dir:'', st:'', sort:'date'},
-  ui: {step:15, hourH:64, hideSpecs:[], compact:false, groupBy:'dir'}
+  ui: {step:15, hourH:64, hideSpecs:[], compact:false, groupBy:'dir'},
+  cash: {opening_set:false, opening:0, in:0, out:0, balance:0, payouts:[]},
+  cashStamp: ''
 };
 try {
   var uis = JSON.parse(localStorage.getItem('klio_manage_ui') || 'null');
@@ -47,6 +49,24 @@ function monthName(d){ return ['Январь','Февраль','Март','Ап�
 function t2m(t){ var p = t.split(':'); return (+p[0])*60 + (+p[1]); }
 function m2t(m){ return p2(Math.floor(m/60)) + ':' + p2(m%60); }
 
+/* отпечаток состояния кассы — чтобы перерисовывать блок только при реальном изменении */
+function cashStamp(c){ return JSON.stringify([c.opening_set, c.opening, c.in, c.out, c.balance, (c.payouts || []).length]); }
+/* иллюстрация кассового аппарата — фирменная линейная графика (бордо + золото) */
+var CASH_SVG = '<svg viewBox="0 0 140 112" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M88 8h20v26l-3-2.4-3 2.4-3-2.4-3 2.4-3-2.4-3 2.4z" fill="#fffdfa"/>' +
+  '<path d="M92 15h12M92 20h12M92 25h8" stroke="#d4af37"/>' +
+  '<rect x="26" y="10" width="56" height="34" rx="5" fill="#fffdfa"/>' +
+  '<rect x="32" y="16" width="44" height="22" rx="3" fill="#f3e7c8" stroke="#d4af37"/>' +
+  '<text x="54" y="33" text-anchor="middle" font-size="16" font-weight="700" fill="#7d2a35" stroke="none" font-family="Marcellus,serif">₽</text>' +
+  '<path d="M54 44v8"/>' +
+  '<path d="M18 52h104a6 6 0 0 1 6 6v12H12V58a6 6 0 0 1 6-6z" fill="#fffdfa"/>' +
+  '<path d="M22 59h9M35 59h9M22 65h9M35 65h9" stroke="#c9b98f"/>' +
+  '<rect x="88" y="54" width="30" height="12" rx="2.5" fill="#f8f3e9"/>' +
+  '<path d="M12 70h116v22a6 6 0 0 1-6 6H18a6 6 0 0 1-6-6z" fill="#f8f3e9"/>' +
+  '<rect x="58" y="78" width="24" height="8" rx="4" fill="#fffdfa"/>' +
+  '<circle cx="30" cy="84" r="6" fill="#f3e7c8" stroke="#d4af37"/>' +
+  '<circle cx="42" cy="88.5" r="6" fill="#f3e7c8" stroke="#d4af37"/>' +
+'</svg>';
 var ST_RU = {planned:'Запланирована', service:'Услуга оказана · ждём расчёт', paid:'Оплата внесена · ждём расчёт со специалистом',
              done:'Полностью завершена', canceled:'Отменена', noshow:'Клиент не пришёл'};
 var ST_SHORT = {planned:'Запланирована', service:'В работе', paid:'Оплачена', done:'Выполнено', canceled:'Отменена', noshow:'Не пришла'};
@@ -238,6 +258,7 @@ function boot(){
     S.items = {};
     (j.items || []).forEach(function(it){ S.items[it.id] = it; });
     if (j.meta) S.meta = j.meta;
+    if (j.cash) { S.cash = j.cash; S.cashStamp = cashStamp(j.cash); }
     S.lastSeen = Math.floor(Date.now()/1000);
     try { S.lastSeen = +(localStorage.getItem('klio_manage_seen') || S.lastSeen); } catch(e){}
     return api('action=events&since=2147483647').then(function(e2){
@@ -277,6 +298,13 @@ function poll(){
   if (document.hidden || !S.token) return;
   api('action=state&since=' + S.version).then(function(j){
     if (j.meta) S.meta = j.meta;
+    if (j.cash) { /* касса: обновление у всех пользователей, даже если записи не менялись */
+      var cs = cashStamp(j.cash);
+      if (cs !== S.cashStamp) {
+        S.cashStamp = cs; S.cash = j.cash;
+        if (S.view === 'bal') renderBal();
+      }
+    }
     var changed = j.items || [];
     if (changed.length || j.version !== S.version) {
       S.version = j.version;
@@ -303,6 +331,10 @@ function poll(){
       updateBadges();
     }
     (j.items || []).forEach(function(ev){
+      if (ev.type === 'cash_payout' || ev.type === 'cash_opening') { /* операции кассы других пользователей */
+        if (ev.user !== S.name) toast((ev.type === 'cash_payout' ? '💸' : '🏦') + ' <b>' + esc(ev.title || 'Касса') + '</b><br><small>' + esc(ev.info || '') + (ev.user ? ' · ' + esc(ev.user) : '') + '</small>');
+        return;
+      }
       if (ev.type !== 'lead_new') return;
       toast('🔔 <b>Новая заявка</b><br><small>' + esc(ev.info || '') + '</small>');
       S.leadsCount = (S.leadsCount || 0) + 1;
@@ -328,6 +360,7 @@ var IC = {
   chevR:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>',
   calPick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2" fill="currentColor" stroke="none"/></svg>',
   users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M16 5.5a3.2 3.2 0 1 1 0 6.3M17.5 14.8c1.9.5 3.2 2 3.6 4.2"/></svg>',
+  cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="7" rx="1.8"/><path d="M7 8h4M3 11.5h18V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="16" r="2.1"/><path d="M17 15.5h.01M7 15.5h.01"/></svg>',
   out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h-8a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 6 20h8M10 12h11M17.5 8.5L21 12l-3.5 3.5"/></svg>',
   spec:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c.7-3.6 3.3-5.6 6.5-5.6s5.8 2 6.5 5.6"/></svg>'
 };
@@ -1465,6 +1498,131 @@ function balItems(){
   out.sort(function(a,b){ return (a.date + a.start) < (b.date + b.start) ? -1 : 1; });
   return out;
 }
+/* ================= КАССА (блок внизу «Баланса») =================
+   Остаток — всегда фактический (считает сервер, от периода не зависит).
+   История выдачи — фильтруется выбранным в балансе периодом. */
+function cashHtml(r){
+  var c = S.cash || {opening_set:false, opening:0, balance:0, payouts:[]};
+  var from = r[0], to = r[1];
+  var rows = (c.payouts || []).filter(function(p){
+    var d = new Date((p.t || 0) * 1000);
+    var ds = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+    return ds >= from && ds <= to;
+  }).sort(function(a, b){ return (b.t || 0) - (a.t || 0); });
+  var perSum = 0;
+  rows.forEach(function(p){ perSum += p.amount || 0; });
+
+  var left =
+    '<div class="mng-cash-l">' +
+      '<div class="mc-ico">' + CASH_SVG + '</div>' +
+      '<div class="mc-cap">Текущий остаток наличных</div>' +
+      '<div class="mc-sum" id="mcCashSum">' + rub(c.balance) + '</div>' +
+      (c.opening_set
+        ? '<button class="mng-btn gold" id="cashOut" style="margin-top:6px;padding:11px 22px">Выдать из кассы</button>'
+        : '<div class="mc-first">' +
+            '<div class="mc-first-t">Первый запуск кассы</div>' +
+            '<div class="mc-first-s">Внесите фактический остаток наличных в кассе салона. Операция однократная — дальше остаток считается автоматически.</div>' +
+            '<div style="display:flex;gap:8px;margin-top:9px">' +
+              '<input class="mng-inp" id="cashOpenSum" type="text" inputmode="numeric" placeholder="0" style="max-width:120px;text-align:center;font-weight:800">' +
+              '<button class="mng-btn gold" id="cashOpenBtn" style="flex:1">Задать остаток</button>' +
+            '</div>' +
+          '</div>') +
+      '<div class="mc-hint">Наличные поступают в кассу при оплате записей способом «Наличные». Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
+    '</div>';
+
+  var rowsHtml = rows.length ? rows.map(function(p){
+    var d = new Date((p.t || 0) * 1000);
+    var dt = p2(d.getDate()) + '.' + p2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    return '<div class="mc-row">' +
+      '<div class="mc-r1"><b>' + esc(p.purpose || '—') + '</b><span class="mc-amt">−' + rub(p.amount || 0) + '</span></div>' +
+      '<div class="mc-r2">Получатель: <b>' + esc(p.receiver || '—') + '</b>' + (p.comment ? ' · ' + esc(p.comment) : '') + '</div>' +
+      '<div class="mc-r3">' + dt + ' · зарегистрировал(а): ' + esc(p.by || '—') + '</div>' +
+    '</div>';
+  }).join('') : '<div class="mc-empty">За выбранный период выдач из кассы не было.</div>';
+
+  var right =
+    '<div class="mng-cash-r">' +
+      '<div class="mc-rh"><span>История выдачи наличных</span><b>Выдано за период: ' + rub(perSum) + '</b></div>' +
+      '<div class="mc-list">' + rowsHtml + '</div>' +
+    '</div>';
+
+  return '<div class="mng-cash"><div class="mng-cash-t">' + IC.cash + '<span>Касса</span></div>' +
+    '<div class="mng-cash-g">' + left + right + '</div></div>';
+}
+function bindCash(body){
+  var outBtn = document.getElementById('cashOut');
+  if (outBtn) outBtn.onclick = openCashOut;
+  var opBtn = document.getElementById('cashOpenBtn');
+  if (opBtn) opBtn.onclick = function(){
+    var v = parseInt((document.getElementById('cashOpenSum').value || '').replace(/[^\d]/g, ''), 10);
+    if (isNaN(v)) { toast('Укажите сумму остатка (можно 0)'); return; }
+    askYes('Начальный остаток кассы', 'Задать начальный остаток ' + rub(v) + '?\n\nОперация однократная: позже изменить его нельзя. Дальше касса будет считаться автоматически по операциям.', 'Задать остаток', function(){
+      api(null, {action:'cash_opening', amount:v}).then(function(j){
+        if (j.cash) { S.cash = j.cash; S.cashStamp = cashStamp(j.cash); }
+        toast('Начальный остаток кассы сохранён');
+        if (S.view === 'bal') renderBal();
+      }).catch(function(e){ toast(e.msg || 'Ошибка'); });
+    });
+  };
+}
+function openCashOut(){
+  var old = document.getElementById('mngOvl'); if (old) old.remove();
+  var ovl = document.createElement('div');
+  ovl.className = 'mng-ovl'; ovl.id = 'mngOvl';
+  var specsDl = (S.meta.specialists || []).map(function(s){ return '<option value="' + esc(s) + '">'; }).join('');
+  ovl.innerHTML =
+  '<div class="mng-card">' +
+    '<div class="mng-grip"></div><button class="mng-x" id="coX">✕</button>' +
+    '<h2 style="margin-bottom:2px">Выдача из кассы</h2>' +
+    '<div class="who">Сейчас в кассе: <b>' + rub((S.cash || {}).balance || 0) + '</b></div>' +
+    '<hr class="mng-hr">' +
+    '<label class="mng-lbl">Сумма выдачи, ₽</label>' +
+    '<input class="mng-inp" id="coSum" type="text" inputmode="numeric" placeholder="0" autocomplete="off">' +
+    '<label class="mng-lbl">Получатель денежных средств</label>' +
+    '<input class="mng-inp" id="coWho" list="coSpecs" placeholder="Кому выдаются деньги" autocomplete="off"><datalist id="coSpecs">' + specsDl + '</datalist>' +
+    '<label class="mng-lbl">Назначение расхода</label>' +
+    '<input class="mng-inp" id="coPurp" list="coPurps" placeholder="Например: закупка материалов" autocomplete="off">' +
+    '<datalist id="coPurps"><option value="Закупка материалов"><option value="Хозяйственные расходы"><option value="Выплата вознаграждения специалисту"><option value="Инкассация"><option value="Возврат клиенту"></datalist>' +
+    '<label class="mng-lbl">Комментарий (необязательно)</label>' +
+    '<input class="mng-inp" id="coComm" placeholder="Примечание к операции" autocomplete="off">' +
+    '<div class="mng-err" id="coErr" style="display:none"></div>' +
+    '<div class="mng-actions">' +
+      '<button class="mng-btn" id="coCancel">Отмена</button>' +
+      '<button class="mng-btn gold" id="coOk" style="flex:1.7;padding:13px">Подтвердить выдачу</button>' +
+    '</div>' +
+  '</div>';
+  root.appendChild(ovl);
+  document.getElementById('coX').onclick = function(){ ovl.remove(); };
+  document.getElementById('coCancel').onclick = function(){ ovl.remove(); };
+  ovl.onclick = function(e){ if (e.target === ovl) ovl.remove(); };
+  setTimeout(function(){ document.getElementById('coSum').focus(); }, 80);
+  /* идентификатор операции: повторная отправка (двойной тап, обрыв сети) не спишет деньги дважды */
+  var op = 'co-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  document.getElementById('coOk').onclick = function(){
+    var err = document.getElementById('coErr');
+    var show = function(m){ err.style.display = 'block'; err.textContent = m; };
+    err.style.display = 'none';
+    var v = parseInt((document.getElementById('coSum').value || '').replace(/[^\d]/g, ''), 10);
+    var who = document.getElementById('coWho').value.trim();
+    var purp = document.getElementById('coPurp').value.trim();
+    var comm = document.getElementById('coComm').value.trim();
+    if (isNaN(v) || v <= 0) return show('Укажите сумму выдачи.');
+    if (v > ((S.cash || {}).balance || 0)) return show('Сумма превышает остаток наличных в кассе (' + rub((S.cash || {}).balance || 0) + ').');
+    if (!who) return show('Укажите получателя денежных средств.');
+    if (!purp) return show('Укажите назначение расхода.');
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Проводим…';
+    api(null, {action:'cash_payout', amount:v, receiver:who, purpose:purp, comment:comm, op:op}).then(function(j){
+      if (j.cash) { S.cash = j.cash; S.cashStamp = cashStamp(j.cash); }
+      ovl.remove();
+      toast('💸 Выдано из кассы: ' + rub(v));
+      if (S.view === 'bal') renderBal();
+    }).catch(function(e){
+      btn.disabled = false; btn.textContent = 'Подтвердить выдачу';
+      show(e.msg || 'Не удалось провести операцию.');
+    });
+  };
+}
 function renderBal(){
   var body = document.getElementById('mngBody');
   var r = balRange();
@@ -1536,7 +1694,9 @@ function renderBal(){
       '<div>СБП: <b>' + rub(byPay.sbp) + '</b></div><div>Терминал: <b>' + rub(byPay.term) + '</b></div>' +
     '</div>' +
     (specRows ? '<div class="mng-chips">' + specRows + '</div>' : '') +
-    (items.length ? groupsHtml : '<div class="mng-empty">За выбранный период денежных операций нет.</div>');
+    (items.length ? groupsHtml : '<div class="mng-empty">За выбранный период денежных операций нет.</div>') +
+    cashHtml(r); /* блок «Касса» — внизу, после всех финансовых показателей */
+  bindCash(body);
   Array.prototype.forEach.call(body.querySelectorAll('[data-bm]'), function(b){
     b.onclick = function(){ S.bal.mode = b.dataset.bm; renderBal(); };
   });
@@ -1714,7 +1874,9 @@ var EV_META = {
   complete:      {i:'🏁', c:'green',  ru:'Запись завершена'},
   delete:        {i:'🗑️', c:'red',    ru:'Удаление записи'},
   lead_delete:   {i:'🗑️', c:'red',    ru:'Удаление заявки'},
-  lead_done:     {i:'📨', c:'blue',   ru:'Заявка обработана'}
+  lead_done:     {i:'📨', c:'blue',   ru:'Заявка обработана'},
+  cash_opening:  {i:'🏦', c:'green',  ru:'Касса: начальный остаток'},
+  cash_payout:   {i:'💸', c:'orange', ru:'Касса: выдача наличных'}
 };
 var EV_C_HEX = {green:'#6d9350', blue:'#7d8ca8', orange:'#c27a3a', red:'#b3543f', gray:'#8a8578', amber:'#c1912f'};
 var SRC_RU = {panel:'Админ-панель', app:'Приложение', web:'Браузер', site:'Сайт', dikidi:'DIKIDI'};
@@ -1788,7 +1950,7 @@ function histRowHtml(ev){
       '<div class="mng-hev-i">' + esc(ev.info || '') + '</div>' +
       '<div class="mng-hev-d">' + esc(ev.user || '—') + ' · ' + esc(SRC_RU[ev.src] || ev.src || '—') + '</div>' +
       '<div class="mng-hev-x">' + details +
-        '<div style="margin-top:8px"><button class="mng-btn sm" data-chain="' + esc(ev.obj + ':' + ev.oid) + '">Вся цепочка действий по ' + (ev.obj === 'lead' ? 'заявке' : 'записи') + '</button></div>' +
+        '<div style="margin-top:8px"><button class="mng-btn sm" data-chain="' + esc(ev.obj + ':' + ev.oid) + '">Вся цепочка действий по ' + (ev.obj === 'lead' ? 'заявке' : (ev.obj === 'cash' ? 'операции кассы' : 'записи')) + '</button></div>' +
       '</div>' +
     '</div><div class="chv">›</div>' +
   '</div>';
@@ -1906,7 +2068,7 @@ var NF_TABS = [
 var NF_GROUPS = {
   book: ['create','edit','reschedule','service_change','spec_change','cancel','noshow','return','done','complete','delete'],
   lead: ['lead_new','lead_done','lead_delete'],
-  pay:  ['pay_new','pay_change','paymethod','reward_new','reward_change'],
+  pay:  ['pay_new','pay_change','paymethod','reward_new','reward_change','cash_opening','cash_payout'],
   sys:  []
 };
 if (!S.nfTab) S.nfTab = '';

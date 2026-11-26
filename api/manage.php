@@ -26,6 +26,7 @@ $F_EV      = $DATA . '/manage-events.json';   /* кольцевой буфер �
 $F_PUSH    = $DATA . '/push-tokens.json';     /* FCM-токены устройств команды */
 $F_FCM     = $DATA . '/fcm.json';             /* service account Firebase (недоступен из веба) */
 $F_FCMT    = $DATA . '/fcm-token.json';       /* кеш OAuth access_token */
+$F_CASH    = $DATA . '/manage-cash.json';     /* касса: начальный остаток + журнал выдач (недоступна из веба) */
 
 function out($arr, $code = 200){ http_response_code($code); echo json_encode($arr, JSON_UNESCAPED_UNICODE); exit; }
 function jread($f, $def){ if (!file_exists($f)) return $def; $j = json_decode((string)file_get_contents($f), true); return is_array($j) ? $j : $def; }
@@ -85,6 +86,38 @@ function book_snap($it){
 /* ----- блокировка-хранилище записей ----- */
 function book_load(){ global $F_BOOK; $b = jread($F_BOOK, []); if (!isset($b['version'])) $b = ['version'=>0,'seq'=>0,'items'=>[]]; return $b; }
 function book_save($b){ global $F_BOOK; jwrite($F_BOOK, $b); }
+
+/* ----- касса: накопительный учёт наличных -----
+   Остаток = начальный остаток + поступления наличными − выдачи.
+   Поступление = активная (не отменённая/не удалённая) запись со способом оплаты «Наличные»,
+   оплата которой внесена после задания начального остатка (метка cash_at ставится при сохранении).
+   Вознаграждение специалиста кассу НЕ уменьшает — выдача оформляется отдельной операцией. */
+function cash_default(){ return ['opening'=>0, 'opening_set'=>false, 'opening_at'=>0, 'opening_by'=>'', 'payouts'=>[]]; }
+function cash_load(){ global $F_CASH; $c = jread($F_CASH, cash_default()); if (!isset($c['payouts']) || !is_array($c['payouts'])) $c['payouts'] = []; return $c; }
+function cash_receipts($b, $from){
+    $in = 0;
+    foreach (($b['items'] ?? []) as $it) {
+        if (!empty($it['deleted'])) continue;
+        if (!empty($it['state'])) continue;            /* отмена/неявка — деньги не в кассе */
+        if (($it['pay'] ?? null) !== 'cash') continue; /* безналичные способы кассу не пополняют */
+        $a = (int)($it['amount'] ?? 0); if ($a <= 0) continue;
+        $ct = (int)($it['cash_at'] ?? 0);
+        if (!$ct || $ct < $from) continue;             /* оплата внесена до старта учёта */
+        $in += $a;
+    }
+    return $in;
+}
+function cash_public($cash, $b){
+    $set = !empty($cash['opening_set']);
+    $in = $set ? cash_receipts($b, (int)($cash['opening_at'] ?? 0)) : 0;
+    $out = 0;
+    foreach ($cash['payouts'] as $p) $out += (int)($p['amount'] ?? 0);
+    $opening = $set ? (int)($cash['opening'] ?? 0) : 0;
+    $ps = array_values($cash['payouts']);
+    if (count($ps) > 500) $ps = array_slice($ps, -500);
+    return ['opening_set'=>$set, 'opening'=>$opening, 'in'=>$in, 'out'=>$out,
+            'balance'=>$opening + $in - $out, 'payouts'=>$ps];
+}
 
 /* ----- токены ----- */
 function tokens_load(){ global $F_TOKENS; $t = jread($F_TOKENS, []); $now = time(); $ch = false; foreach ($t as $k => $v){ if (($v['exp'] ?? 0) < $now){ unset($t[$k]); $ch = true; } } if ($ch) jwrite($F_TOKENS, $t); return $t; }
@@ -308,6 +341,7 @@ if ($action === 'state') {
         if ((int)($it['v'] ?? 0) > $since) $items[] = !empty($it['deleted']) ? $it : pub_item($it, $now);
     }
     $resp = ['ok'=>true, 'version'=>(int)$b['version'], 'now'=>$now, 'items'=>$items];
+    $resp['cash'] = cash_public(cash_load(), $b); /* касса: остаток всегда актуальный, от периода не зависит */
     $m = jread($F_META, []);
     $mv = (int)($m['v'] ?? 1);
     if ($since === 0 || (int)($b['meta_v'] ?? 1) !== $mv || true) { /* meta лёгкая — отдаём всегда */
@@ -371,9 +405,12 @@ if ($action === 'save') {
             'id'=>'b' . $b['seq'], 'date'=>$date, 'start'=>$start, 'end'=>$end,
             'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'services'=>$services, 'spec'=>$spec, 'comment'=>$comm,
             'done'=>$done, 'amount'=>$amount, 'pay'=>$pay, 'reward'=>$reward, 'state'=>$state,
+            'cash_at'=>null,
             'history'=>[['t'=>$now, 'u'=>$user, 'm'=>'Создана запись']],
             'v'=>$ver,
         ];
+        /* метка поступления наличных в кассу: первая фиксация оплаты «Наличные» */
+        if ($pay === 'cash' && $amount !== null && $amount > 0 && $state === '') $it['cash_at'] = $now;
         $b['items'][] = $it;
         book_save($b);
         hist_log('create', 'booking', $it['id'], 'Создана запись', book_info($it), $user, $me['src'],
@@ -416,6 +453,9 @@ if ($action === 'save') {
     $it['client'] = $client; $it['phone'] = $phone; $it['comment'] = $comm;
     $it['dir'] = $dir; $it['service'] = $serv; $it['services'] = $services; $it['spec'] = $spec;
     $it['done'] = $done; $it['amount'] = $amount; $it['pay'] = $pay; $it['reward'] = $reward; $it['state'] = $state;
+    /* метка поступления наличных: ставится один раз при первой фиксации оплаты «Наличные»;
+       записи, закрытые до появления кассы, метку не получают и в учёт не попадают */
+    if ($pay === 'cash' && $amount !== null && $amount > 0 && $state === '' && empty($it['cash_at'])) $it['cash_at'] = $now;
     $it['v'] = $ver;
     foreach ($hist as $m) $it['history'][] = ['t'=>$now, 'u'=>$user, 'm'=>$m];
     if (count($it['history']) > 200) $it['history'] = array_slice($it['history'], -200);
@@ -469,6 +509,99 @@ if ($action === 'save') {
     }
 
     out(['ok'=>true, 'version'=>$ver, 'item'=>pub_item($it, $now)]);
+}
+
+/* ================= CASH_OPENING: однократный ввод начального остатка кассы ================= */
+if ($action === 'cash_opening') {
+    $amount = $body['amount'] ?? null;
+    $amount = ($amount === '' || $amount === null) ? null : (int)$amount;
+    if ($amount === null || $amount < 0 || $amount > 100000000) out(['ok'=>false,'err'=>'Укажите корректную сумму начального остатка.'], 400);
+
+    $fp = fopen($F_CASH, 'c+');
+    if (!$fp) out(['ok'=>false,'err'=>'Нет доступа к хранилищу кассы.'], 500);
+    flock($fp, LOCK_EX);
+    $cash = json_decode((string)stream_get_contents($fp), true);
+    if (!is_array($cash)) $cash = cash_default();
+    if (!empty($cash['opening_set'])) {
+        flock($fp, LOCK_UN); fclose($fp);
+        out(['ok'=>false,'err'=>'Начальный остаток уже задан (' . number_format((int)$cash['opening'], 0, '', ' ') . ' ₽) и изменению не подлежит.'], 409);
+    }
+    $now = time();
+    $cash['opening'] = $amount;
+    $cash['opening_set'] = true;
+    $cash['opening_at'] = $now;
+    $cash['opening_by'] = $me['name'] !== '' ? $me['name'] : '—';
+    if (!isset($cash['payouts']) || !is_array($cash['payouts'])) $cash['payouts'] = [];
+    rewind($fp); ftruncate($fp, 0);
+    fwrite($fp, json_encode($cash, JSON_UNESCAPED_UNICODE));
+    fflush($fp); flock($fp, LOCK_UN); fclose($fp);
+
+    hist_log('cash_opening', 'cash', 'opening', 'Касса: задан начальный остаток',
+        'Начальный остаток наличных: ' . number_format($amount, 0, '', ' ') . ' ₽',
+        $me['name'] !== '' ? $me['name'] : '—', $me['src'],
+        ['fin'=>1, 'after'=>['Начальный остаток'=>number_format($amount, 0, '', ' ') . ' ₽']]);
+    out(['ok'=>true, 'cash'=>cash_public($cash, book_load())]);
+}
+
+/* ================= CASH_PAYOUT: регистрация выдачи наличных из кассы ================= */
+if ($action === 'cash_payout') {
+    $amount = $body['amount'] ?? null;
+    $amount = ($amount === '' || $amount === null) ? null : (int)$amount;
+    $receiver = mb_substr(trim((string)($body['receiver'] ?? '')), 0, 80);
+    $purpose  = mb_substr(trim((string)($body['purpose'] ?? '')), 0, 160);
+    $comment  = mb_substr(trim((string)($body['comment'] ?? '')), 0, 300);
+    $op       = mb_substr(trim((string)($body['op'] ?? '')), 0, 64);
+    if ($amount === null || $amount <= 0 || $amount > 100000000) out(['ok'=>false,'err'=>'Укажите корректную сумму выдачи.'], 400);
+    if ($receiver === '') out(['ok'=>false,'err'=>'Укажите получателя денежных средств.'], 400);
+    if ($purpose === '') out(['ok'=>false,'err'=>'Укажите назначение расхода.'], 400);
+
+    /* вся операция — под эксклюзивной блокировкой: две одновременные выдачи не создадут минус */
+    $fp = fopen($F_CASH, 'c+');
+    if (!$fp) out(['ok'=>false,'err'=>'Нет доступа к хранилищу кассы.'], 500);
+    flock($fp, LOCK_EX);
+    $cash = json_decode((string)stream_get_contents($fp), true);
+    if (!is_array($cash)) $cash = cash_default();
+    if (!isset($cash['payouts']) || !is_array($cash['payouts'])) $cash['payouts'] = [];
+    if (empty($cash['opening_set'])) {
+        flock($fp, LOCK_UN); fclose($fp);
+        out(['ok'=>false,'err'=>'Сначала задайте начальный остаток кассы.'], 400);
+    }
+    /* идемпотентность: повторная отправка той же операции (двойной тап, обрыв сети) не списывает деньги дважды */
+    if ($op !== '') {
+        foreach ($cash['payouts'] as $p) {
+            if (($p['op'] ?? '') === $op) {
+                $pub = cash_public($cash, book_load());
+                flock($fp, LOCK_UN); fclose($fp);
+                out(['ok'=>true, 'dup'=>true, 'cash'=>$pub]);
+            }
+        }
+    }
+    $b = book_load();
+    $pub = cash_public($cash, $b);
+    if ($amount > (int)$pub['balance']) {
+        flock($fp, LOCK_UN); fclose($fp);
+        out(['ok'=>false,'err'=>'Недостаточно наличных в кассе: доступно ' . number_format((int)$pub['balance'], 0, '', ' ') . ' ₽.'], 400);
+    }
+    $now = time();
+    $maxId = 0;
+    foreach ($cash['payouts'] as $p) if (preg_match('/^p(\d+)$/', (string)($p['id'] ?? ''), $m)) $maxId = max($maxId, (int)$m[1]);
+    $it = ['id'=>'p' . ($maxId + 1), 'op'=>$op, 't'=>$now, 'amount'=>$amount,
+           'receiver'=>$receiver, 'purpose'=>$purpose, 'comment'=>$comment,
+           'by'=>$me['name'] !== '' ? $me['name'] : '—'];
+    $cash['payouts'][] = $it;
+    rewind($fp); ftruncate($fp, 0);
+    fwrite($fp, json_encode($cash, JSON_UNESCAPED_UNICODE));
+    fflush($fp); flock($fp, LOCK_UN); fclose($fp);
+
+    hist_log('cash_payout', 'cash', $it['id'], 'Касса: выдача наличных',
+        number_format($amount, 0, '', ' ') . ' ₽ · ' . $receiver . ' · ' . $purpose,
+        $me['name'] !== '' ? $me['name'] : '—', $me['src'],
+        ['fin'=>1, 'after'=>[
+            'Сумма'=>number_format($amount, 0, '', ' ') . ' ₽',
+            'Получатель'=>$receiver,
+            'Назначение'=>$purpose,
+            'Комментарий'=>$comment !== '' ? $comment : '—']]);
+    out(['ok'=>true, 'cash'=>cash_public($cash, $b)]);
 }
 
 /* ================= DELETE: удаление записи (любого статуса, с следа́ми в журнале) ================= */

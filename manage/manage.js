@@ -14,11 +14,11 @@ var S = {
   token: null, name: '', panel: false,
   version: 0, items: {}, meta: {specialists: []}, dirs: [],
   view: 'cal', calMode: 'day', date: todayStr(),
-  fSpec: '', fDir: '', bal: {mode:'today', from:'', to:'', fSpec:'', fPay:''},
+  fSpec: '', fDir: '', bal: {mode:'today', from:'', to:'', fSpec:'', fPay:'', group:'svc'},
   lastSeen: 0, timer: null, online: true, dirty: false,
   evSeq: 0, notifSeq: 0, leadsCount: 0,
-  lst: {q:'', per:'upcoming', spec:'', st:'', sort:'date'},
-  ui: {step:15, hourH:64, hideSpecs:[], compact:false}
+  lst: {q:'', per:'upcoming', spec:'', dir:'', st:'', sort:'date'},
+  ui: {step:15, hourH:64, hideSpecs:[], compact:false, groupBy:'dir'}
 };
 try {
   var uis = JSON.parse(localStorage.getItem('klio_manage_ui') || 'null');
@@ -450,8 +450,10 @@ function itemsOfDay(d){
   Object.keys(S.items).forEach(function(id){
     var it = S.items[id];
     if (it.deleted || it.date !== d) return;
-    if (S.fSpec && it.spec !== S.fSpec) return;
-    if (S.fDir && it.dir !== S.fDir) return;
+    if (S.fSpec === '__nospec__') { if (it.spec && specInList(it.spec)) return; }
+    else if (S.fSpec && it.spec !== S.fSpec) return;
+    if (S.fDir === '__other__') { if (dirInList(it.dir)) return; }
+    else if (S.fDir && it.dir !== S.fDir) return;
     out.push(it);
   });
   out.sort(function(a,b){ return a.start < b.start ? -1 : 1; });
@@ -495,14 +497,46 @@ function dateStrip(){
   h += '</div>';
   return h;
 }
-function specChips(){
-  var vs = visSpecs();
-  if (!vs.length) return '';
-  var h = '<div class="mng-chipsrow">' +
-    '<button class="mng-schip' + (!S.fSpec?' on':'') + '" data-sp="">Все</button>' +
-    vs.map(function(s){
-      return '<button class="mng-schip' + (S.fSpec===s?' on':'') + '" data-sp="' + esc(s) + '"><span class="dot" style="background:' + specColor(s) + '"></span>' + esc(s) + '</button>';
-    }).join('') + '</div>';
+/* направления (категории услуг) из прайса */
+function allDirs(){ return S.dirs.map(function(d){ return d.cat; }); }
+function dirInList(dir){ return allDirs().indexOf(dir) >= 0; }
+function specInList(sp){ return !!sp && S.meta.specialists.indexOf(sp) >= 0; }
+var TINT_HEX = {rose:'#a95d6d', olive:'#8f9457', gold:'#c9a24b', lilac:'#9580a8'};
+function dirColor(dir){ return TINT_HEX[dirTint(dir)] || '#a95d6d'; }
+/* переключатель «по услугам / по мастерам» + чипсы выбранной группы */
+function groupChips(){
+  var byDir = (S.ui.groupBy !== 'spec') && S.dirs.length;
+  var h = '<div class="mng-grow"><div class="mng-seg mng-gseg">' +
+    '<button data-g="dir"' + (byDir ? ' class="on"' : '') + '>По услугам</button>' +
+    '<button data-g="spec"' + (!byDir ? ' class="on"' : '') + '>По мастерам</button>' +
+    '</div></div>';
+  if (byDir) {
+    var hasOther = false;
+    Object.keys(S.items).forEach(function(id){
+      var it = S.items[id];
+      if (!it.deleted && !dirInList(it.dir)) hasOther = true;
+    });
+    h += '<div class="mng-chipsrow">' +
+      '<button class="mng-schip' + (!S.fDir ? ' on' : '') + '" data-dr="">Все</button>' +
+      allDirs().map(function(d){
+        return '<button class="mng-schip' + (S.fDir === d ? ' on' : '') + '" data-dr="' + esc(d) + '"><span class="dot" style="background:' + dirColor(d) + '"></span>' + esc(d) + '</button>';
+      }).join('') +
+      (hasOther ? '<button class="mng-schip' + (S.fDir === '__other__' ? ' on' : '') + '" data-dr="__other__"><span class="dot" style="background:#9a8f7d"></span>Прочее</button>' : '') +
+      '</div>';
+  } else {
+    var hasNoSpec = false;
+    Object.keys(S.items).forEach(function(id){
+      var it = S.items[id];
+      if (!it.deleted && !specInList(it.spec)) hasNoSpec = true;
+    });
+    h += '<div class="mng-chipsrow">' +
+      '<button class="mng-schip' + (!S.fSpec ? ' on' : '') + '" data-sp="">Все</button>' +
+      visSpecs().map(function(s){
+        return '<button class="mng-schip' + (S.fSpec === s ? ' on' : '') + '" data-sp="' + esc(s) + '"><span class="dot" style="background:' + specColor(s) + '"></span>' + esc(s) + '</button>';
+      }).join('') +
+      (hasNoSpec ? '<button class="mng-schip' + (S.fSpec === '__nospec__' ? ' on' : '') + '" data-sp="__nospec__"><span class="dot" style="background:#9a8f7d"></span>Без мастера</button>' : '') +
+      '</div>';
+  }
   return h;
 }
 function bindCalTools(){
@@ -522,7 +556,18 @@ function bindCalTools(){
     c.onclick = function(){ S.date = c.dataset.d; renderCal(); };
   });
   Array.prototype.forEach.call(root.querySelectorAll('.mng-schip'), function(c){
-    c.onclick = function(){ S.fSpec = c.dataset.sp; renderCal(); };
+    c.onclick = function(){
+      if (c.dataset.dr !== undefined) { S.fDir = c.dataset.dr; S.fSpec = ''; }
+      else { S.fSpec = c.dataset.sp; S.fDir = ''; }
+      renderCal();
+    };
+  });
+  Array.prototype.forEach.call(root.querySelectorAll('[data-g]'), function(b){
+    b.onclick = function(){
+      if ((S.ui.groupBy || 'dir') !== b.dataset.g) {
+        S.ui.groupBy = b.dataset.g; S.fSpec = ''; S.fDir = ''; saveUi(); renderCal();
+      }
+    };
   });
   /* центрируем выбранную дату в ленте */
   var strip = document.getElementById('mngDStrip');
@@ -549,9 +594,9 @@ function renderCal(keepScroll){
   var my = keepScroll && mw ? mw.scrollTop : 0, mx = keepScroll && mw ? mw.scrollLeft : 0;
   var lq = keepScroll ? (document.getElementById('lstQ') || {value:null}).value : null;
 
-  if (S.calMode === 'month') body.innerHTML = calTools() + renderMatrix();
+  if (S.calMode === 'month') body.innerHTML = calTools() + groupChips() + renderMatrix();
   else if (S.calMode === 'list') body.innerHTML = calTools() + renderListHtml();
-  else body.innerHTML = calTools() + specChips() + renderDay();
+  else body.innerHTML = calTools() + groupChips() + renderDay();
 
   bindCalTools();
   if (S.calMode === 'day') {
@@ -631,21 +676,41 @@ function miniCalPick(){
 }
 
 /* ---- сетка «День»: время вертикально, специалисты горизонтально ---- */
-function evHtml(it, narrow, posStyle){
+function evHtml(it, narrow, posStyle, showSpec){
   var st = it.status;
   var tint = (st === 'canceled' || st === 'noshow') ? '' : ' tint-' + dirTint(it.dir);
   var ico = (st === 'done') ? '<span class="sic">✓</span>' : (st === 'planned' ? '<span class="sic pl">•</span>' : '');
   var cmp = S.ui.compact;
   var pos = posStyle || '';
+  var sub = showSpec ? (it.spec ? ' · ' + esc(it.spec) : '') : (it.phone ? ' · ' + esc(it.phone) : '');
   return '<div class="mng-ev st-' + st + tint + (cmp ? ' diminfo' : '') + '" data-bid="' + it.id + '" style="' + pos + 'top:' + ((t2m(it.start) - WORK_START*60)/60*hh()) + 'px;height:' + Math.max(24, (t2m(it.end)-t2m(it.start))/60*hh() - 3) + 'px">' +
     ico + '<span class="t">' + esc(it.start) + '–' + esc(it.end) + '</span> <b>' + esc(it.service) + '</b>' +
-    (narrow || cmp ? '' : '<small>' + esc(it.client) + (it.phone ? ' · ' + esc(it.phone) : '') + '</small>') +
+    (narrow || cmp ? '' : '<small>' + esc(it.client) + sub + '</small>') +
     '</div>';
 }
 function renderDay(){
-  var cols = visSpecs().filter(function(s){ return !S.fSpec || s === S.fSpec; });
-  if (!cols.length) cols = visSpecs();
+  var byDir = (S.ui.groupBy !== 'spec') && S.dirs.length;
+  var cols;
+  if (byDir) {
+    cols = allDirs().filter(function(d){ return !S.fDir || S.fDir === d; });
+    if (S.fDir === '__other__') cols = ['__other__'];
+    if (!cols.length) cols = allDirs();
+  } else {
+    if (S.fSpec === '__nospec__') cols = ['__nospec__'];
+    else {
+      cols = visSpecs().filter(function(s){ return !S.fSpec || s === S.fSpec; });
+      if (!cols.length) cols = visSpecs();
+    }
+  }
   var items = itemsOfDay(S.date);
+  if (byDir && !S.fDir) { /* записи вне списка направлений — отдельная колонка «Прочее» */
+    var anyOther = items.some(function(it){ return !dirInList(it.dir); });
+    if (anyOther) cols = cols.concat(['__other__']);
+  }
+  if (!byDir && !S.fSpec) { /* записи без мастера (солярий и т.п.) — отдельная колонка */
+    var anyNoSpec = items.some(function(it){ return !specInList(it.spec); });
+    if (anyNoSpec) cols = cols.concat(['__nospec__']);
+  }
   var totalH = (WORK_END - WORK_START) * hh();
   var step = +S.ui.step || 15;
   var h = '<div class="mng-gridwrap" id="mngGridWrap"><div class="mng-grid">';
@@ -654,9 +719,17 @@ function renderDay(){
   for (var hr = WORK_START; hr < WORK_END; hr++) h += '<div class="mng-gh" style="height:' + hh() + 'px"><span>' + p2(hr) + ':00</span></div>';
   h += '</div>';
   cols.forEach(function(col){
-    var colItems = items.filter(function(it){ return it.spec === col; });
+    var colItems = items.filter(function(it){
+      if (byDir) return (col === '__other__') ? !dirInList(it.dir) : (it.dir === col);
+      return (col === '__nospec__') ? !specInList(it.spec) : (it.spec === col);
+    });
     var laid = layoutOverlaps(colItems);
-    h += '<div class="mng-gcol"><div class="mng-ghead"><span style="color:' + specColor(col) + '">●</span> ' + esc(col) + '</div>' +
+    var head = byDir
+      ? '<span class="dot" style="background:' + (col === '__other__' ? '#9a8f7d' : dirColor(col)) + '"></span>' + esc(col === '__other__' ? 'Прочее' : col)
+      : (col === '__nospec__'
+          ? '<span class="dot" style="background:#9a8f7d"></span>Без мастера'
+          : '<span style="color:' + specColor(col) + '">●</span> ' + esc(col));
+    h += '<div class="mng-gcol"><div class="mng-ghead">' + head + '</div>' +
       '<div class="mng-daycol" data-col="' + esc(col) + '" style="height:' + totalH + 'px">';
     for (var mnt = 0; mnt < (WORK_END - WORK_START) * 60; mnt += step) {
       var isHour = mnt % 60 === 0;
@@ -665,12 +738,12 @@ function renderDay(){
     laid.forEach(function(l){
       var w = 100 / l.cols;
       var pos = 'left:calc(' + (l.col*w) + '% + 3px);right:calc(' + (100-(l.col+1)*w) + '% + 3px);';
-      h += evHtml(l.it, l.cols > 2, pos);
+      h += evHtml(l.it, l.cols > 2, pos, byDir);
     });
     h += nowLine(S.date) + '</div></div>';
   });
   h += '</div></div>';
-  if (!cols.length) h = '<div class="mng-empty">Нет видимых специалистов. Откройте настройки журнала (⚙) и включите специалистов.</div>';
+  if (!cols.length) h = '<div class="mng-empty">Нет видимых колонок. Откройте настройки журнала (⚙) или переключите группировку.</div>';
   setTimeout(function(){
     Array.prototype.forEach.call(root.querySelectorAll('.mng-daycol'), function(c){
       c.onclick = function(e){
@@ -680,7 +753,12 @@ function renderDay(){
         var st2 = +S.ui.step || 15;
         var mins = WORK_START*60 + Math.round(((e.clientY - r.top) / hh() * 60) / st2) * st2;
         mins = Math.max(WORK_START*60, Math.min(WORK_END*60 - 30, mins));
-        openCard(null, false, {date:S.date, start:m2t(mins), end:m2t(Math.min(mins+60, WORK_END*60)), spec:c.dataset.col});
+        var pre = {date:S.date, start:m2t(mins), end:m2t(Math.min(mins+60, WORK_END*60))};
+        if ((S.ui.groupBy !== 'spec') && S.dirs.length) {
+          if (c.dataset.col !== '__other__') pre.dir = c.dataset.col;
+          pre.spec = ''; /* по услугам — мастер не нужен (солярий и т.п.) */
+        } else pre.spec = (c.dataset.col === '__nospec__') ? '' : c.dataset.col;
+        openCard(null, false, pre);
       };
     });
   });
@@ -750,21 +828,25 @@ function bindPinch(gw){
 function renderMatrix(){
   var p = S.date.split('-'), y = +p[0], m = +p[1];
   var daysIn = new Date(y, m, 0).getDate();
-  var specs = visSpecs();
+  var byDir = (S.ui.groupBy !== 'spec') && S.dirs.length;
+  var rowsList = byDir ? allDirs() : visSpecs();
   var t = todayStr();
-  /* считаем записи (кроме отменённых/неявки) */
-  var counts = {};
+  /* считаем записи (кроме отменённых/неявки); вне списка — «__other__»/«__nospec__» */
+  var counts = {}, hasX = false;
   Object.keys(S.items).forEach(function(id){
     var it = S.items[id];
     if (it.deleted || it.state) return;
     if (!it.date || it.date.slice(0,7) !== y + '-' + p2(m)) return;
-    var k = it.spec + '|' + it.date;
+    var rk = byDir ? (dirInList(it.dir) ? it.dir : '__other__') : (specInList(it.spec) ? it.spec : '__nospec__');
+    if (rk === '__other__' || rk === '__nospec__') hasX = true;
+    var k = rk + '|' + it.date;
     counts[k] = (counts[k] || 0) + 1;
   });
+  if (hasX) rowsList = rowsList.concat([byDir ? '__other__' : '__nospec__']);
   var maxC = 1;
   Object.keys(counts).forEach(function(k){ if (counts[k] > maxC) maxC = counts[k]; });
 
-  var h = '<div class="mng-mxwrap"><table class="mng-mx"><thead><tr><th class="mxspec">Специалист</th>';
+  var h = '<div class="mng-mxwrap"><table class="mng-mx"><thead><tr><th class="mxspec">' + (byDir ? 'Услуга' : 'Специалист') + '</th>';
   for (var d = 1; d <= daysIn; d++) {
     var ds = y + '-' + p2(m) + '-' + p2(d);
     var wd = new Date(y, m-1, d).getDay();
@@ -772,31 +854,47 @@ function renderMatrix(){
       '<span class="dw">' + ['вс','пн','вт','ср','чт','пт','сб'][wd] + '</span>' + d + '</th>';
   }
   h += '</tr></thead><tbody>';
-  specs.forEach(function(sp){
-    h += '<tr><th class="mxspec">' + esc(sp) + '</th>';
+  rowsList.forEach(function(rk){
+    var xrow = (rk === '__other__' || rk === '__nospec__');
+    var rlbl = rk === '__other__' ? 'Прочее' : (rk === '__nospec__' ? 'Без мастера' : rk);
+    h += '<tr><th class="mxspec">' + (xrow ? '<span class="dot" style="background:#9a8f7d"></span>' : (byDir ? '<span class="dot" style="background:' + dirColor(rk) + '"></span>' : '<span class="dot" style="background:' + specColor(rk) + '"></span>')) + esc(rlbl) + '</th>';
     for (var d2 = 1; d2 <= daysIn; d2++) {
       var ds2 = y + '-' + p2(m) + '-' + p2(d2);
-      var n = counts[sp + '|' + ds2] || 0;
-      h += '<td class="mxc' + (ds2 === t ? ' today' : '') + '" data-d="' + ds2 + '" data-sp="' + esc(sp) + '">' +
+      var n = counts[rk + '|' + ds2] || 0;
+      h += '<td class="mxc' + (ds2 === t ? ' today' : '') + '" data-d="' + ds2 + '" data-rk="' + esc(rk) + '">' +
         (n ? '<span class="mxn">' + n + '</span><span class="mxbar" style="width:' + Math.max(18, Math.round(n/maxC*100)) + '%"></span>' : '<span class="mx0">·</span>') + '</td>';
     }
     h += '</tr>';
   });
   h += '</tbody></table></div>' +
-    '<div style="color:var(--mut);font-size:12px;margin-top:8px">Число — количество записей специалиста на дату. Нажатие на ячейку открывает день этого специалиста, на число месяца — день всех специалистов.</div>';
+    '<div style="color:var(--mut);font-size:12px;margin-top:8px">Число — количество записей ' + (byDir ? 'направления' : 'специалиста') + ' на дату. Нажатие на ячейку открывает день ' + (byDir ? 'этого направления' : 'этого специалиста') + ', на число месяца — день целиком. Колёсико мыши листает дни.</div>';
   return h;
 }
 function bindMatrix(){
+  var byDir = (S.ui.groupBy !== 'spec') && S.dirs.length;
   Array.prototype.forEach.call(root.querySelectorAll('.mng-mx td.mxc'), function(c){
     c.onclick = function(){
-      S.date = c.dataset.d; S.fSpec = c.dataset.sp || ''; S.calMode = 'day'; renderCal();
+      S.date = c.dataset.d;
+      if (byDir) { S.fDir = c.dataset.rk || ''; S.fSpec = ''; }
+      else { S.fSpec = c.dataset.rk || ''; S.fDir = ''; }
+      S.calMode = 'day'; renderCal();
     };
   });
   Array.prototype.forEach.call(root.querySelectorAll('.mng-mx thead th[data-d]'), function(c){
     c.onclick = function(){
-      S.date = c.dataset.d; S.fSpec = ''; S.calMode = 'day'; renderCal();
+      S.date = c.dataset.d; S.fSpec = ''; S.fDir = ''; S.calMode = 'day'; renderCal();
     };
   });
+  /* колёсико мыши листает дни, когда по вертикали таблица не скроллится */
+  var w = root.querySelector('.mng-mxwrap');
+  if (w) {
+    w.addEventListener('wheel', function(e){
+      if (w.scrollWidth > w.clientWidth + 2 && w.scrollHeight <= w.clientHeight + 2) {
+        w.scrollLeft += (e.deltaY || e.deltaX);
+        e.preventDefault();
+      }
+    }, {passive: false});
+  }
 }
 
 /* ---- режим «Список» ---- */
@@ -818,6 +916,7 @@ function listItems(){
     if (it.deleted) return; /* удалённые — только в глобальной истории */
     if (it.date < from || it.date > to) return;
     if (S.lst.spec && it.spec !== S.lst.spec) return;
+    if (S.lst.dir && it.dir !== S.lst.dir) return;
     if (S.lst.st && it.status !== S.lst.st) return;
     if (q) {
       var hay = ((it.client || '') + ' ' + (it.phone || '') + ' ' + (it.service || '')).toLowerCase();
@@ -856,6 +955,7 @@ function renderListHtml(){
           return '<option value="' + o[0] + '"' + (S.lst.per===o[0]?' selected':'') + '>' + o[1] + '</option>';
         }).join('') + '</select>' +
       '<select class="mng-sel" id="lstSpec"><option value="">Все специалисты</option>' + specOpts + '</select>' +
+      '<select class="mng-sel" id="lstDir"><option value="">Все услуги</option>' + allDirs().map(function(d){ return '<option' + (S.lst.dir===d?' selected':'') + '>' + esc(d) + '</option>'; }).join('') + '</select>' +
     '</div><div class="mng-lst-row">' +
       '<select class="mng-sel" id="lstSt"><option value="">Все состояния</option>' +
         Object.keys(ST_SHORT).map(function(k){ return '<option value="' + k + '"' + (S.lst.st===k?' selected':'') + '>' + ST_SHORT[k] + '</option>'; }).join('') + '</select>' +
@@ -897,7 +997,7 @@ function bindList(restoreQ){
     }, 500); };
   }
   function bf(id, key){ var el = document.getElementById(id); if (el) el.onchange = function(){ S.lst[key] = el.value; renderCal(true); }; }
-  bf('lstPer','per'); bf('lstSpec','spec'); bf('lstSt','st'); bf('lstSort','sort');
+  bf('lstPer','per'); bf('lstSpec','spec'); bf('lstDir','dir'); bf('lstSt','st'); bf('lstSort','sort');
   Array.prototype.forEach.call(root.querySelectorAll('.mng-lr'), function(r){
     r.onclick = function(){ openCard(r.dataset.bid); };
   });
@@ -957,7 +1057,7 @@ function settingsSheet(){
     };
   });
   document.getElementById('setReset').onclick = function(){
-    S.ui = {step:15, hourH:64, hideSpecs:[], compact:false};
+    S.ui = {step:15, hourH:64, hideSpecs:[], compact:false, groupBy:'dir'};
     saveUi(); sh.remove();
     if (S.view === 'cal') renderCal(); else renderShell();
   };
@@ -1018,7 +1118,7 @@ function openCard(bid, soft, prefill){
   for (var tm = WORK_START*60; tm <= WORK_END*60-15; tm += 15) { if (it.start === m2t(tm)) onGrid = true; timeOpts += '<option' + (it.start===m2t(tm)?' selected':'') + '>' + m2t(tm) + '</option>'; }
   if (!onGrid) timeOpts = '<option selected>' + esc(it.start) + '</option>' + timeOpts;
   var dirOpts = S.dirs.map(function(dd){ return '<option' + (it.dir===dd.cat?' selected':'') + '>' + esc(dd.cat) + '</option>'; }).join('');
-  var specOpts = S.meta.specialists.map(function(s){ return '<option' + (it.spec===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
+  var specOpts = '<option value="">— без специалиста —</option>' + S.meta.specialists.map(function(s){ return '<option' + (it.spec===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
 
   var hist = (it.history || []).slice().reverse().map(function(h){
     var d = new Date(h.t*1000);
@@ -1111,6 +1211,7 @@ function openCard(bid, soft, prefill){
     var box = $('mcFree'); if (!box) return;
     if ($('mcEdit').style.display === 'none') { box.innerHTML = ''; return; }
     var dur = +$('mcDur').value || 60;
+    if (!$('mcSpec').value) { box.innerHTML = '<div class="fr-t" style="color:var(--mut);font-size:12.5px;margin-top:8px">Специалист не выбран — запись можно сохранить и без него (например, солярий). Свободные окна считаются после выбора специалиста.</div>'; return; }
     var slots = freeSlots($('mcSpec').value, $('mcDate').value, dur);
     if (!slots.length) { box.innerHTML = '<div class="fr-t" style="color:var(--mut);font-size:12.5px;margin-top:8px">Свободных окон на ' + dur + ' мин у этого специалиста нет.</div>'; return; }
     box.innerHTML = '<div class="fr-t">Свободные окна · ' + dur + ' мин</div><div class="fr-c">' +
@@ -1275,12 +1376,36 @@ function renderBal(){
     if (it.pay && a) byPay[it.pay] += a;
     if (rw) bySpec[it.spec] = (bySpec[it.spec] || 0) + rw;
   });
-  var rows = items.map(function(it){
-    return '<tr class="r" data-bid="' + it.id + '"><td>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</td><td>' + esc(it.service) + '</td><td>' + esc(it.spec) + '</td>' +
+  var specRows = Object.keys(bySpec).sort().map(function(s){ return '<div>' + esc(s) + ': <b>' + rub(bySpec[s]) + '</b></div>'; }).join('');
+
+  /* группировка: по услугам / по специалистам / по способам оплаты */
+  var g = S.bal.group || 'svc';
+  var keyOf = g === 'spec' ? function(it){ return it.spec || '— без специалиста —'; }
+            : g === 'pay'  ? function(it){ return it.pay ? PAY_RU[it.pay] : '— не указан —'; }
+            :                function(it){ return it.service || '—'; };
+  var gmap = {}, gorder = [];
+  items.forEach(function(it){
+    var k = keyOf(it);
+    if (!gmap[k]) { gmap[k] = {k:k, n:0, a:0, r:0, its:[]}; gorder.push(k); }
+    var G = gmap[k];
+    G.n++; G.a += it.amount || 0; G.r += it.reward || 0; G.its.push(it);
+  });
+  gorder.sort(function(x, y){ return gmap[y].a - gmap[x].a; });
+  var occRow = function(it){
+    return '<tr class="r" data-bid="' + it.id + '"><td>' + esc(dRus(it.date)) + ' ' + esc(it.start) + '</td><td>' + esc(it.service) + '</td><td>' + esc(it.spec || '—') + '</td>' +
       '<td>' + (it.amount!=null?rub(it.amount):'—') + '</td><td>' + (it.pay?PAY_RU[it.pay]:'—') + '</td><td>' + (it.reward!=null?rub(it.reward):'—') + '</td>' +
       '<td>' + (it.amount!=null||it.reward!=null ? rub((it.amount||0)-(it.reward||0)) : '—') + '</td></tr>';
+  };
+  var zapis = function(n){ var m10 = n%10, m100 = n%100; return m10===1&&m100!==11?'запись':(m10>=2&&m10<=4&&(m100<10||m100>=20)?'записи':'записей'); };
+  var groupsHtml = gorder.map(function(k){
+    var G = gmap[k];
+    return '<details class="mng-bgrp"><summary><span class="gn">' + esc(k) + '</span>' +
+      '<span class="gc">' + G.n + ' ' + zapis(G.n) + '</span>' +
+      '<span class="ga">' + rub(G.a) + '</span></summary>' +
+      '<div style="overflow-x:auto"><table class="mng-table"><tr><th>Дата</th><th>Услуга</th><th>Специалист</th><th>Получено</th><th>Оплата</th><th>Вознаграждение</th><th>Остаток</th></tr>' +
+      G.its.map(occRow).join('') +
+      '<tr class="sum"><td colspan="3">Итого · ' + esc(k) + '</td><td>' + rub(G.a) + '</td><td></td><td>' + rub(G.r) + '</td><td>' + rub(G.a - G.r) + '</td></tr></table></div></details>';
   }).join('');
-  var specRows = Object.keys(bySpec).sort().map(function(s){ return '<div>' + esc(s) + ': <b>' + rub(bySpec[s]) + '</b></div>'; }).join('');
 
   body.innerHTML =
     '<div class="mng-bar">' +
@@ -1296,6 +1421,11 @@ function renderBal(){
       '<select class="mng-sel" id="bSpec"><option value="">Все специалисты</option>' + S.meta.specialists.map(function(s){ return '<option' + (S.bal.fSpec===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('') + '</select>' +
       '<select class="mng-sel" id="bPay"><option value="">Все способы оплаты</option>' + Object.keys(PAY_RU).map(function(p){ return '<option value="' + p + '"' + (S.bal.fPay===p?' selected':'') + '>' + PAY_RU[p] + '</option>'; }).join('') + '</select>' +
     '</div>' +
+    '<div class="mng-bar"><div class="mng-seg mng-gseg">' +
+      '<button data-bg="svc"' + (g==='svc'?' class="on"':'') + '>По услугам</button>' +
+      '<button data-bg="spec"' + (g==='spec'?' class="on"':'') + '>По специалистам</button>' +
+      '<button data-bg="pay"' + (g==='pay'?' class="on"':'') + '>По оплате</button>' +
+    '</div></div>' +
     '<div class="mng-balsum">' +
       '<div class="mng-bal gold"><span>Получено денег</span><b>' + rub(sumA) + '</b></div>' +
       '<div class="mng-bal orange"><span>Вознаграждения специалистам</span><b>' + rub(sumR) + '</b></div>' +
@@ -1306,13 +1436,12 @@ function renderBal(){
       '<div>СБП: <b>' + rub(byPay.sbp) + '</b></div><div>Терминал: <b>' + rub(byPay.term) + '</b></div>' +
     '</div>' +
     (specRows ? '<div class="mng-chips">' + specRows + '</div>' : '') +
-    (items.length ?
-      '<div style="overflow-x:auto"><table class="mng-table"><tr><th>Дата</th><th>Услуга</th><th>Специалист</th><th>Получено</th><th>Оплата</th><th>Вознаграждение</th><th>Остаток</th></tr>' +
-      rows +
-      '<tr class="sum"><td colspan="3">Итого</td><td>' + rub(sumA) + '</td><td></td><td>' + rub(sumR) + '</td><td>' + rub(sumA - sumR) + '</td></tr></table></div>'
-      : '<div class="mng-empty">За выбранный период денежных операций нет.</div>');
+    (items.length ? groupsHtml : '<div class="mng-empty">За выбранный период денежных операций нет.</div>');
   Array.prototype.forEach.call(body.querySelectorAll('[data-bm]'), function(b){
     b.onclick = function(){ S.bal.mode = b.dataset.bm; renderBal(); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll('[data-bg]'), function(b){
+    b.onclick = function(){ S.bal.group = b.dataset.bg; renderBal(); };
   });
   var bf = document.getElementById('bApply');
   if (bf) bf.onclick = function(){ S.bal.from = document.getElementById('bFrom').value; S.bal.to = document.getElementById('bTo').value; renderBal(); };

@@ -438,6 +438,10 @@ function head_html($title){
          '.side a.nav.on{background:var(--acc);color:var(--red)}',
          '.side .out{margin-top:auto;font-size:13px;opacity:.8}',
          '.side .out button{margin-top:8px;width:100%;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:10px;padding:9px;cursor:pointer;font-family:inherit;font-weight:600}',
+         '.side #sideTgl{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:10px;width:100%;padding:7px 0;cursor:pointer;font-size:15px;margin-bottom:12px;font-family:inherit}',
+         '.side a.nav .ic{display:inline-block;width:22px;margin-right:6px;text-align:center}',
+         '@media(min-width:821px){.side{transition:width .18s ease}html.sidemin .side{width:60px;padding:26px 8px}html.sidemin .side .lbl,html.sidemin .side .sub{display:none}html.sidemin .side .logo{font-size:15px;letter-spacing:.04em;text-align:center;white-space:nowrap}html.sidemin .side a.nav{padding:10px 0;text-align:center;font-size:16px}html.sidemin .side a.nav .ic{margin-right:0;width:auto}html.sidemin .side .out button{font-size:0;padding:9px 0}html.sidemin .side .out button::before{content:"⏻";font-size:15px}}',
+         '@media(max-width:820px){.side #sideTgl{display:none}}',
          '.main{flex:1;padding:28px 26px 60px;max-width:1080px}',
          'h1{font-family:Marcellus,serif;font-weight:400;font-size:26px;margin-bottom:18px}',
          'h1 small{display:block;font-family:Manrope;font-size:13px;color:var(--mut);margin-top:4px}',
@@ -510,7 +514,7 @@ function head_html($title){
          '.cardgrid{grid-template-columns:repeat(2,1fr);gap:10px}',
          '.stbar .btn{padding:10px 14px;font-size:14px}}',
          '@media(max-width:420px){.cardgrid{grid-template-columns:1fr}}',
-         '</style></head><body>';
+         '</style><script>try{if(localStorage.klio_admin_side==="1")document.documentElement.classList.add("sidemin")}catch(e){}</script></head><body>';
 }
 
 function login_view($need_setup, $f){
@@ -539,11 +543,13 @@ if ($need_setup) login_view(true, $flash);
 if (!is_auth()) login_view(false, $flash);
 
 $nav = ['dashboard'=>'Главная','salon'=>'Салон','leads'=>'Заявки','content'=>'Рейтинг и цены','cards'=>'Фото категорий','password'=>'Пароль'];
+$navIc = ['dashboard'=>'⌂','salon'=>'📅','leads'=>'🔔','content'=>'★','cards'=>'🖼','password'=>'🔑'];
 if (!isset($nav[$page])) $page = 'dashboard';
 head_html($nav[$page]);
 echo '<div class="wrap"><aside class="side">',
-     '<div><div class="logo">КЛИО</div><div class="sub">панель управления</div></div>';
-foreach ($nav as $k => $v) echo '<a class="nav' . ($page === $k ? ' on' : '') . '" href="index.php?p=' . $k . '">' . e($v) . '</a>';
+     '<div><div class="logo">КЛИО</div><div class="sub">панель управления</div></div>',
+     '<button id="sideTgl" type="button" title="Свернуть / развернуть меню">☰</button>';
+foreach ($nav as $k => $v) echo '<a class="nav' . ($page === $k ? ' on' : '') . '" href="index.php?p=' . $k . '" title="' . e($v) . '"><span class="ic">' . $navIc[$k] . '</span><span class="lbl">' . e($v) . '</span></a>';
 echo '<div class="out"><form method="post"><input type="hidden" name="action" value="logout"><button>Выйти</button></form></div>',
      '</aside><main class="main">';
 if ($flash) echo '<div class="flash ' . ($flash[1] ? 'ok' : 'err') . '">' . e($flash[0]) . '</div>';
@@ -816,8 +822,8 @@ if ($page === 'salon') {
     echo '<style>.main{max-width:100%}</style>',
          '<h1>Управление салоном<small>Календарь записей, расчёты, баланс — всё синхронизировано с приложением команды</small></h1>',
          '<div id="klioManage" data-token="' . e($tok) . '"></div>',
-         '<link rel="stylesheet" href="/manage/manage.css?v=4">',
-         '<script src="/manage/manage.js?v=6"></script>';
+         '<link rel="stylesheet" href="/manage/manage.css?v=7">',
+         '<script src="/manage/manage.js?v=7"></script>';
 }
 
 /* ================= ПАРОЛЬ ================= */
@@ -830,4 +836,4 @@ if ($page === 'password') {
          '<button class="btn" style="margin-top:16px">Сменить пароль</button></form></div>';
 }
 
-echo '</main></div></body></html>';
+echo '</main></div><script>(function(){var b=document.getElementById("sideTgl");if(b)b.onclick=function(){var d=document.documentElement;d.classList.toggle("sidemin");try{localStorage.setItem("klio_admin_side",d.classList.contains("sidemin")?"1":"0")}catch(e){}};})();</script></body></html>';

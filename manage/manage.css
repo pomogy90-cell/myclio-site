@@ -97,14 +97,14 @@ border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;color:var(--
 .mng-schip.on .dot{background:var(--gold2)}
 
 /* ================= сетка «День» ================= */
-.mng-gridwrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:calc(100vh - 272px);max-height:calc(100dvh - 272px);min-height:300px;overscroll-behavior:contain;touch-action:pan-x pan-y;position:relative;scrollbar-color:var(--line2) transparent}
+.mng-gridwrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:calc(100vh - 272px);max-height:calc(100dvh - 272px);min-height:300px;touch-action:pan-x pan-y;position:relative;scrollbar-color:var(--line2) transparent}
 .mng-gridwrap::-webkit-scrollbar,.mng-mxwrap::-webkit-scrollbar{width:10px;height:10px}
 .mng-gridwrap::-webkit-scrollbar-thumb,.mng-mxwrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px;border:2px solid var(--card)}
 .mng-gridwrap::-webkit-scrollbar-track,.mng-mxwrap::-webkit-scrollbar-track{background:transparent}
 .mng-gridwrap::-webkit-scrollbar-corner,.mng-mxwrap::-webkit-scrollbar-corner{background:transparent}
 .mng-grid{display:flex;width:max-content;min-width:100%;position:relative}
 .mng-gtime{flex:none;width:46px;border-right:1px solid var(--line2);position:sticky;left:0;z-index:8;background:var(--card)}
-.mng-gcol{flex:1 0 118px;min-width:110px;border-right:1px solid var(--line);position:relative;background:var(--card)}
+.mng-gcol{flex:1 1 0;min-width:96px;border-right:1px solid var(--line);position:relative;background:var(--card)}
 .mng-gcol:last-child{border-right:0}
 .mng-ghead{position:sticky;top:0;background:var(--card2);border-bottom:1px solid var(--line2);text-align:center;
 font-size:13px;font-weight:800;padding:8px 4px;z-index:6;min-height:44px}
@@ -149,7 +149,7 @@ font-size:9px;line-height:11px;text-align:center;font-weight:900}
 
 /* ---- матрица «Месяц» ---- */
 .mng-mxwrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);
-max-height:calc(100vh - 272px);max-height:calc(100dvh - 272px);min-height:300px;overscroll-behavior:contain}
+max-height:calc(100vh - 272px);max-height:calc(100dvh - 272px);min-height:300px}
 .mng-mx{border-collapse:separate;border-spacing:0;min-width:100%}
 .mng-mx th,.mng-mx td{border-bottom:1px solid #f0e9d8;padding:0;text-align:center}
 .mng-mx thead th{position:sticky;top:0;z-index:6;background:var(--card2);font-size:10.5px;color:var(--mut);font-weight:800;
@@ -402,5 +402,23 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
  .mng-sheet-c{border-radius:20px;animation:mngup .2s}
  .mng-sheet-c::before{display:none}
  .mng-bnav{max-width:560px;margin:0 auto;border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0}
- .mng-gcol{width:150px}
 }
+
+/* ---- группировка журнала: по услугам / по мастерам ---- */
+.mng-grow{margin:0 0 6px}
+.mng-gseg{max-width:330px}
+.mng-bar .mng-gseg{max-width:480px;flex:1}
+.mng-gseg button{padding:6px 4px;font-size:12.5px}
+.mng-ghead{line-height:1.15;overflow-wrap:anywhere}
+.mng-ghead .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.mng-mx .mxspec .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+/* ---- баланс: раскрывающиеся группы ---- */
+.mng-bgrp{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.mng-bgrp>summary{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;list-style:none;font-weight:800}
+.mng-bgrp>summary::-webkit-details-marker{display:none}
+.mng-bgrp>summary::after{content:'\25BE';color:var(--mut);transition:transform .15s}
+.mng-bgrp[open]>summary::after{transform:rotate(180deg)}
+.mng-bgrp .gn{font-size:14.5px}
+.mng-bgrp .gc{color:var(--mut);font-size:12px;font-weight:700}
+.mng-bgrp .ga{margin-left:auto;color:var(--wine);font-size:14.5px}
+.mng-bgrp .mng-table{margin:0 10px 10px;width:calc(100% - 20px)}

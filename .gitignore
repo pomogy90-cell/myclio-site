@@ -1,15 +1,10 @@
-# секреты и живые данные — только сервер
+# секреты и живые данные — только сервер, НИКОГДА не коммитить
 api/data/
-# бинарные артефакты
-*.apk
+# ключи подписи и сборочные артефакты
 *.keystore
-# изображения зеркалируются с myclio.ru/img/
-img/*.jpg
-img/*.webp
-img/*.png
-img/*.ico
-app/img/
-app/*.png
-favicon.ico
-favicon-32.png
-apple-touch-icon.png
+*.jks
+*.apk
+local.properties
+# ОС/служебное
+.DS_Store
+Thumbs.db

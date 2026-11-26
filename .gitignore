@@ -1,0 +1,15 @@
+# секреты и живые данные — только сервер
+api/data/
+# бинарные артефакты
+*.apk
+*.keystore
+# изображения зеркалируются с myclio.ru/img/
+img/*.jpg
+img/*.webp
+img/*.png
+img/*.ico
+app/img/
+app/*.png
+favicon.ico
+favicon-32.png
+apple-touch-icon.png

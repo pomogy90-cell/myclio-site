@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КЛИО — салон красоты у м. Бульвар Рокоссовского | запись онлайн</title>
+<meta name="description" content="Салон красоты КЛИО у метро Бульвар Рокоссовского: стрижки, маникюр, массаж, косметология, солярий. Ежедневно 10:00–21:00. Записывайтесь онлайн!">
+<link rel="preload" as="image" href="img/klio-hero.jpg?v=20261023" fetchpriority="high">
+<link rel="canonical" href="https://myclio.ru/"> <meta property="og:url" content="https://myclio.ru/"> <meta property="og:title" content="КЛИО — салон красоты у м. Бульвар Рокоссовского">
+<meta property="og:description" content="Полный спектр услуг красоты. Онлайн-запись за минуту. Москва, Открытое шоссе 23к4.">
+<meta property="og:type" content="website"> <meta property="og:image" content="https://myclio.ru/img/klio-og.jpg"> <meta property="og:image:width" content="1200"> <meta property="og:image:height" content="630"> <meta name="twitter:image" content="https://myclio.ru/img/klio-og.jpg"> <meta property="og:locale" content="ru_RU"> <meta property="og:site_name" content="Салон красоты КЛИО"> <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Marcellus&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#efe8dc; --bg2:#e7ddcd; --panel:#f8f3e9; --line:#d3c7b4; --gold:#7d2a35; --gold2:#9c3a46; --text:#3c352f; --muted:#8a7d6e;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); }
+a { color:inherit; text-decoration:none; }
+img { display:block; }
+.container { width:100%; max-width:1360px; margin:0 auto; padding:0 24px; }
+h1,h2 { font-family:'Playfair Display',Georgia,'Times New Roman',serif; } /* ===== ШАПКА: канон дорогих сайтов ===== */
+header.site {
+  position:sticky; top:0; z-index:50;
+  background:linear-gradient(120deg, #5e1f28 0%, #7d2a35 55%, #6b232d 100%);
+  box-shadow:0 6px 28px rgba(70,20,28,.35);
+}
+header.site::after {
+  content:''; display:block; height:2px;
+  background:linear-gradient(90deg, transparent, #d4af37 25%, #e8c98a 50%, #d4af37 75%, transparent);
+}
+.header-row {
+  display:flex; align-items:center; gap:28px;
+  width:100%; max-width:1360px; margin:0 auto; padding:14px 24px;
+}
+.logo { display:flex; align-items:center; gap:14px; flex-shrink:0; text-decoration:none; }
+.logo-img-wrap {
+  width:56px; height:56px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #f8f3e9, #e7ddcd);
+  border:2px solid #d4af37;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.logo-img-wrap img { width:46px; height:46px; object-fit:cover; border-radius:50%; }
+.logo-text { display:flex; flex-direction:column; }
+.logo-name {
+  font-family:'Marcellus',Georgia,serif;
+  font-size:23px; letter-spacing:.16em; color:#f5ead9; line-height:1;
+}
+.logo-sub {
+  margin-top:4px; font-family:'Jost',sans-serif;
+  font-size:8.5px; font-weight:500; letter-spacing:.28em;
+  text-transform:uppercase; color:#e8c98a;
+}
+nav.site {
+  display:flex; align-items:center; gap:2px;
+  margin:0 auto; flex-shrink:0;
+}
+nav.site a {
+  position:relative; display:inline-block;
+  font-family:'Jost',sans-serif; font-size:12px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:#f0e4d3;
+  padding:10px 13px; white-space:nowrap;
+}
+nav.site a::after {
+  content:''; position:absolute; left:13px; right:13px; bottom:6px; height:1.5px;
+  background:linear-gradient(90deg,#e8c98a,#d4af37);
+  transform:scaleX(0); transform-origin:left; transition:transform .22s ease;
+}
+nav.site a:hover { color:#e8c98a; }
+nav.site a:hover::after { transform:scaleX(1); }
+.header-phone {
+  font-family:'Jost',sans-serif; font-size:16px; font-weight:600;
+  letter-spacing:.04em; color:#f5ead9; text-align:right;
+  padding-left:20px; border-left:1px solid rgba(232,201,138,.35);
+  flex-shrink:0; white-space:nowrap;
+}
+.header-phone small { display:block; font-weight:400; color:#d9c9a8; font-size:10px; letter-spacing:.08em; margin-top:3px; }
+
+/* мобильная шапка: лого+телефон строкой, меню — прокручиваемая строка ниже */
+@media (max-width:900px) {
+  .header-row { flex-wrap:wrap; gap:10px 14px; padding:12px 14px; }
+  nav.site {
+    order:3; width:100%; margin:0; justify-content:flex-start;
+    overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    border-top:1px solid rgba(232,201,138,.18); padding-top:6px;
+  }
+  nav.site::-webkit-scrollbar { display:none; }
+  nav.site a { padding:8px 11px; font-size:11.5px; }
+  .header-phone { margin-left:auto; padding-left:14px; font-size:14px; }
+  .logo-name { font-size:20px; }
+}
+
+/* принудительные версии */
+body.fpc .header-row { flex-wrap:nowrap; width:100%; max-width:100%; padding:14px 28px; }
+body.fpc nav.site { order:0; width:auto; margin:0 auto; overflow:visible; border-top:none; padding-top:0; }
+body.fmob .header-row { flex-wrap:wrap; width:100%; max-width:100%; }
+body.fmob nav.site { order:3; width:100%; margin:0; overflow-x:auto; border-top:1px solid rgba(232,201,138,.18); padding-top:6px; }
+
+.hero { position:relative; min-height:640px; display:flex; align-items:center; background-color:#3a2c20; background:url('img/klio-hero.jpg') center/cover no-repeat; }
+.hero::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(239,232,220,.98) 0%, rgba(239,232,220,.93) 55%, rgba(239,232,220,.78) 100%); }
+.hero-in { position:relative; z-index:2; padding:90px 0 80px; max-width:620px; }
+.hero-tag { display:inline-flex; align-items:center; gap:10px; font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; }
+.hero-tag::before { content:''; width:30px; height:1px; background:var(--gold); }
+.hero h1 { color:#2e2721; font-size:clamp(36px,5vw,58px); line-height:1.1; font-weight:400; }
+.hero h1 em { color:var(--gold); font-style:italic; }
+.hero p { margin:18px 0 28px; color:#2e2721; font-size:16px; line-height:1.65; max-width:500px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 28px; border-radius:999px; font-size:15px; font-weight:600; border:1px solid var(--line); background:transparent; color:var(--text); cursor:pointer; transition:all .15s ease; }
+.btn:hover { border-color:var(--gold); color:var(--gold); }
+.btn-gold { background:linear-gradient(120deg,var(--gold),var(--gold2)); color:#ffffff; border:none; box-shadow:0 8px 24px rgba(125,42,53,.3); }
+.btn-gold:hover { color:#ffffff; filter:brightness(1.07); }
+.btn-sm { padding:9px 16px; font-size:13px; border-radius:10px; }
+.hero-feats { display:flex; gap:32px; margin-top:44px; flex-wrap:wrap; font-size:13px; color:#2e2721; }
+.hero-feats span::before { content:'◈ '; color:var(--gold); }
+.rating-pill { display:inline-flex; align-items:center; gap:8px; background:#7d2a35; border:1px solid #7d2a35; color:#ffffff; border-radius:999px; padding:7px 16px; font-size:14px; font-weight:700; margin-bottom:20px; } .section { padding:64px 0; }
+.section.alt { background:#fff; }
+.section-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px; gap:16px; flex-wrap:wrap; }
+.tag { display:inline-flex; align-items:center; gap:10px; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+.tag::before { content:''; width:24px; height:1px; background:var(--gold); }
+.section-head h2 { font-size:clamp(24px,3vw,34px); font-weight:400; } .svc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.svc { position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--line); aspect-ratio:3/4; cursor:pointer; }
+.svc img { width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.svc:hover img { transform:scale(1.07); }
+.svc::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,.92) 100%); }
+.svc-body { position:absolute; left:14px; right:14px; bottom:12px; z-index:2; }
+.svc-body b { display:block; font-size:16px; font-family:'Playfair Display',Georgia,serif; margin-bottom:4px; }
+.svc-body span { color:var(--gold); font-size:12px; } .split { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:center; }
+.split img { width:100%; border-radius:14px; border:1px solid var(--line); }
+.split h2 { font-size:clamp(24px,3vw,34px); font-weight:400; margin-bottom:14px; }
+.split p { color:#6a5f52; line-height:1.75; font-size:15px; margin-bottom:14px; } .price-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.price-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.price-card .pimg { height:150px; overflow:hidden; }
+.price-card .pimg img { width:100%; height:100%; object-fit:cover; }
+.price-card .pbody { padding:16px 18px; }
+.price-card h3 { font-family:'Playfair Display',Georgia,serif; font-size:17px; color:var(--gold); font-weight:400; margin-bottom:10px; }
+.p-row { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px dashed rgba(60,53,47,.08); font-size:14px; }
+.p-row:last-child { border-bottom:none; }
+.p-row span { color:var(--muted); }
+.p-row b { color:var(--text); font-weight:600; white-space:nowrap; } .rev-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.rev { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.rev .stars { color:var(--gold); font-size:14px; letter-spacing:2px; margin-bottom:10px; }
+.rev p { font-size:14px; line-height:1.65; color:#43382f; margin-bottom:14px; }
+.rev .who { display:flex; align-items:center; gap:10px; }
+.rev .ava { width:36px; height:36px; border-radius:50%; background:linear-gradient(120deg,var(--gold),var(--gold2)); color:#7d2a35; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+.rev .who b { font-size:13px; display:block; }
+.rev .who small { color:var(--muted); font-size:11px; } .contacts-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:20px; }
+.c-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px; }
+.c-card h3 { font-family:'Playfair Display',Georgia,serif; color:var(--gold); font-size:18px; margin-bottom:18px; font-weight:400; }
+.c-row { display:flex; gap:14px; align-items:flex-start; margin-bottom:16px; font-size:15px; color:#43382f; }
+.c-row svg { color:var(--gold); flex-shrink:0; margin-top:2px; }
+.c-row small { display:block; color:var(--muted); font-size:12px; }
+.c-form input, .c-form select, .c-form textarea { width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--text); font-size:14px; outline:none; margin-bottom:12px; font-family:inherit; }
+.c-form input:focus, .c-form select:focus, .c-form textarea:focus { border-color:var(--gold); } footer.site { border-top:1px solid var(--line); background:#fff; padding:26px 0; }
+.footer-in { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; font-size:13px; color:var(--muted); } .gallery-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.gallery-grid .g { border-radius:12px; overflow:hidden; border:1px solid var(--line); aspect-ratio:1; }
+.gallery-grid .g img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+.gallery-grid .g:hover img { transform:scale(1.06); } /* запись (модалка) */
+.modal-bk { display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:100; align-items:center; justify-content:center; padding:20px; }
+.modal-bk.open { display:flex; }
+.modal { background:var(--panel); border:1px solid var(--gold); border-radius:16px; padding:26px; max-width:440px; width:100%; }
+.modal h3 { font-family:'Playfair Display',Georgia,serif; color:var(--gold); margin-bottom:6px; font-weight:400; }
+.modal .hint { margin-bottom:16px; }
+.modal-ok { display:none; text-align:center; padding:20px 0; font-size:16px; color:var(--gold); } 
+/* Круглые флажки согласий — компактно, в палитре салона */
+.check-line input[type="checkbox"], .c-form input[type="checkbox"] { appearance:none; -webkit-appearance:none; width:20px; height:20px; min-width:20px; flex:none; border:1.5px solid var(--gold); border-radius:50%; background:#fff; cursor:pointer; margin:1px 0 0; padding:0; display:inline-grid; place-content:center; transition:background .12s ease; }
+.check-line input[type="checkbox"]:checked, .c-form input[type="checkbox"]:checked { background:var(--gold); }
+.check-line input[type="checkbox"]:checked::after, .c-form input[type="checkbox"]:checked::after { content:''; width:5px; height:9px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); margin-top:-2px; }
+/* CSS-навигация */
+.page { display:none; }
+#page-main { display:block; }
+#page-services:target, #page-prices:target, #page-reviews:target, #page-contacts:target, #page-certs:target, #page-zapis:target { display:block; }
+#page-services:target ~ #page-main, #page-prices:target ~ #page-main, #page-reviews:target ~ #page-main, #page-contacts:target ~ #page-main, #page-certs:target ~ #page-main, #page-zapis:target ~ #page-main { display:none; }
+.page:target { animation:pagein .25s ease; }
+@keyframes pagein { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:none;} } @media (max-width:760px) { .container { padding:0 14px; } header.site .container { flex-wrap:wrap; gap:10px; } nav.site { order:3; width:100%; margin-left:0; justify-content:flex-start; gap:14px; font-size:14px; } .hero { min-height:480px; } .hero h1 { font-size:32px; } .svc-grid { grid-template-columns:repeat(2,1fr); gap:10px; } .split { grid-template-columns:1fr; } .price-grid { grid-template-columns:1fr; } .rev-grid { grid-template-columns:1fr; } .contacts-grid { grid-template-columns:1fr; } .gallery-grid { grid-template-columns:repeat(2,1fr); } .section { padding:44px 0; }
+}
+body.fmob .container { padding:0 14px; }
+body.fmob header.site .container { flex-wrap:wrap; }
+body.fmob nav.site { order:3; width:100%; margin-left:0; justify-content:flex-start; }
+body.fmob .hero { min-height:480px; }
+body.fmob .svc-grid { grid-template-columns:repeat(2,1fr); }
+body.fmob .split { grid-template-columns:1fr; }
+body.fmob .price-grid { grid-template-columns:1fr; }
+body.fmob .rev-grid { grid-template-columns:1fr; }
+body.fmob .contacts-grid { grid-template-columns:1fr; }
+body.fmob .gallery-grid { grid-template-columns:repeat(2,1fr); }
+body.fpc .container { max-width:1240px; }
+body.fpc header.site .container { flex-wrap:nowrap; }
+body.fpc nav.site { order:0; width:auto; margin-left:auto; justify-content:flex-end; }
+body.fpc .hero { min-height:640px; }
+body.fpc .svc-grid { grid-template-columns:repeat(4,1fr); }
+body.fpc .split { grid-template-columns:1fr 1fr; }
+body.fpc .price-grid { grid-template-columns:1fr 1fr; }
+body.fpc .rev-grid { grid-template-columns:repeat(3,1fr); }
+body.fpc .contacts-grid { grid-template-columns:1.1fr 1fr; }
+body.fpc .gallery-grid { grid-template-columns:repeat(4,1fr); }
+ 
+.modal-bk:target { display:flex !important; }
+@media (max-width:760px) { .modal-bk { padding:10px; align-items:flex-start; }
+} /* ===== ПЛАНШЕТ (ftab) ===== */
+body.ftab .container { max-width:1000px; padding:0 18px; }
+body.ftab .svc-grid { grid-template-columns:repeat(3,1fr); }
+body.ftab .grid-cards { grid-template-columns:repeat(3,1fr); }
+body.ftab .feat-grid { grid-template-columns:repeat(2,1fr); }
+body.ftab .steps-grid { grid-template-columns:repeat(3,1fr); }
+body.ftab .split { grid-template-columns:1fr 1fr; }
+body.ftab .contacts-grid { grid-template-columns:1fr 1fr; }
+body.ftab .rev-grid { grid-template-columns:repeat(2,1fr); }
+body.ftab .price-grid { grid-template-columns:1fr 1fr; }
+body.ftab .gallery-grid { grid-template-columns:repeat(3,1fr); }
+body.ftab .hero { min-height:520px; }
+body.ftab .hero h1 { font-size:40px; }
+@media (min-width:761px) and (max-width:1100px) { .container { max-width:1000px; padding:0 18px; } .svc-grid { grid-template-columns:repeat(3,1fr); } .grid-cards { grid-template-columns:repeat(3,1fr); } .feat-grid { grid-template-columns:repeat(2,1fr); } .steps-grid { grid-template-columns:repeat(3,1fr); } .split { grid-template-columns:1fr 1fr; } .contacts-grid { grid-template-columns:1fr 1fr; } .rev-grid { grid-template-columns:repeat(2,1fr); } .price-grid { grid-template-columns:1fr 1fr; } .gallery-grid { grid-template-columns:repeat(3,1fr); } .hero { min-height:520px; } .hero h1 { font-size:40px; }
+} /* ===== ПРИНУДИТЕЛЬНЫЕ ВЕРСИИ (перекрывают авто-правила экрана) ===== */
+body.fpc .container{width:100% !important;max-width:100% !important;padding:0 28px !important}
+body.fpc .hero{min-height:620px !important}
+body.fpc .hero h1{font-size:clamp(34px,4.6vw,56px) !important}
+body.fpc .svc-grid{grid-template-columns:repeat(4,1fr) !important;width:100%}
+body.fpc .grid-cards{grid-template-columns:repeat(4,1fr) !important}
+body.fpc .feat-grid{grid-template-columns:repeat(4,1fr) !important}
+body.fpc .steps-grid{grid-template-columns:repeat(5,1fr) !important}
+body.fpc .split{grid-template-columns:1fr 1fr !important}
+body.fpc .contacts-grid{grid-template-columns:1.1fr 1fr !important}
+body.fpc .rev-grid{grid-template-columns:repeat(3,1fr) !important}
+body.fpc .price-grid{grid-template-columns:1fr 1fr !important}
+body.fpc .gallery-grid{grid-template-columns:repeat(4,1fr) !important;width:100%} body.ftab .container{width:100% !important;max-width:100% !important;padding:0 22px !important}
+body.ftab .svc-grid{grid-template-columns:repeat(3,1fr) !important}
+body.ftab .grid-cards{grid-template-columns:repeat(3,1fr) !important}
+body.ftab .feat-grid{grid-template-columns:repeat(2,1fr) !important}
+body.ftab .steps-grid{grid-template-columns:repeat(3,1fr) !important}
+body.ftab .split{grid-template-columns:1fr 1fr !important}
+body.ftab .contacts-grid{grid-template-columns:1fr 1fr !important}
+body.ftab .rev-grid{grid-template-columns:repeat(2,1fr) !important}
+body.ftab .price-grid{grid-template-columns:1fr 1fr !important}
+body.ftab .gallery-grid{grid-template-columns:repeat(3,1fr) !important}
+body.ftab .hero{min-height:520px !important}
+body.ftab .hero h1{font-size:40px !important} body.fmob .container{padding:0 14px !important}
+body.fmob .hero{min-height:460px !important}
+body.fmob .hero h1{font-size:32px !important}
+body.fmob .hero-feats{gap:12px !important;font-size:12px !important}
+body.fmob .svc-grid{grid-template-columns:repeat(2,1fr) !important;gap:10px !important}
+body.fmob .grid-cards{grid-template-columns:repeat(2,1fr) !important;gap:10px !important}
+body.fmob .feat-grid{grid-template-columns:repeat(2,1fr) !important}
+body.fmob .steps-grid{grid-template-columns:1fr !important;gap:14px !important}
+body.fmob .split{grid-template-columns:1fr !important}
+body.fmob .contacts-grid{grid-template-columns:1fr !important}
+body.fmob .rev-grid{grid-template-columns:1fr !important}
+body.fmob .price-grid{grid-template-columns:1fr !important}
+body.fmob .gallery-grid{grid-template-columns:repeat(2,1fr) !important}
+body.fmob .section{padding:42px 0 !important}
+body.fmob .modal-bk{padding:10px !important;align-items:flex-start !important}
+
+/* ===== Подписи карточек (как раньше): белый заголовок + золотой подзаголовок на фото ===== */
+.svc-body b { color:#ffffff; text-shadow:0 1px 8px rgba(0,0,0,.55); }
+.svc-body span { color:#e8c98a !important; }
+
+/* ===== П0: конверсионные элементы и доступность ===== */
+a.rating-pill{text-decoration:none;color:inherit;display:inline-block;cursor:pointer;transition:transform .15s, box-shadow .15s;}
+a.rating-pill:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(70,20,28,.12);}
+.hp-field{position:absolute !important;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;}
+.soc{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--gold);color:var(--gold);text-decoration:none;font-weight:700;font-family:'Jost',sans-serif;font-size:12.5px;transition:background .15s,color .15s;flex:none;}
+.soc:hover{background:var(--gold);color:#fff;}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold2);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;} }
+.priv h3{margin:22px 0 8px;font-size:17px;}
+.priv p,.priv li{font-size:14.5px;line-height:1.65;color:var(--text);}
+.priv ul{padding-left:20px;margin:6px 0;}
+.priv .ph{background:#fdf3d7;border:1px solid #e6cf8f;border-radius:6px;padding:1px 6px;}
+
+/* Фасад карты */
+.map-facade{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;cursor:pointer;}
+.map-facade img{display:block;width:100%;height:auto;}
+.map-facade-btn{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:var(--gold);color:#fff;font-family:'Jost',sans-serif;font-weight:600;font-size:14px;padding:11px 22px;border-radius:12px;box-shadow:0 6px 18px rgba(70,20,28,.35);white-space:nowrap;transition:background .15s;}
+.map-facade:hover .map-facade-btn{background:var(--gold2);}
+</style>
+<!-- VERSION: FINAL-2709 -->
+
+<style id="dyn-css">
+/* ================= ДИНАМИКА (механика с сайта-образца) ================= */
+/* SPA-роутер: страницы включаются классом .active (no-JS fallback — прежний :target) */
+body.js .page{display:none !important}
+body.js .page.active{display:block !important; animation:pagein .4s cubic-bezier(.2,.7,.3,1)}
+
+/* Шапка: прячется при скролле вниз, усиленная тень, активный пункт меню */
+header.site{transition:transform .35s ease, box-shadow .3s ease}
+body.js header.site.hidden{transform:translateY(-110%)}
+body.js header.site.scrolled{box-shadow:0 12px 36px rgba(70,20,28,.5)}
+nav.site a.active{color:#e8c98a}
+nav.site a.active::after{transform:scaleX(1)}
+
+/* Бургер (мобильный) */
+.burger{display:none; background:none; border:1px solid rgba(232,201,138,.4); border-radius:10px; width:44px; height:40px; cursor:pointer; flex-direction:column; align-items:center; justify-content:center; gap:5px; flex-shrink:0; padding:0}
+.burger span{display:block; width:20px; height:2px; background:#e8c98a; border-radius:2px; transition:.25s}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media (max-width:900px){
+  body.js .burger{display:flex; order:2}
+  body.js nav.site{position:fixed; top:76px; left:14px; right:14px; width:auto; margin:0; padding:10px; flex-direction:column; align-items:stretch; gap:2px; background:linear-gradient(160deg,#6b232d,#5e1f28); border:1px solid rgba(232,201,138,.35); border-radius:14px; box-shadow:0 18px 44px rgba(40,10,14,.5); display:none; z-index:60; overflow:visible}
+  body.js nav.site.open{display:flex}
+  body.js nav.site a{padding:12px 14px; font-size:13px}
+}
+
+/* Живой «тканевый» фон hero */
+.hero{overflow:hidden}
+#weave{position:absolute; inset:0; width:100%; height:100%; z-index:1; opacity:.55; pointer-events:none}
+
+/* Индикатор скролла */
+.cue{display:none; position:absolute; left:50%; bottom:16px; transform:translateX(-50%); width:24px; height:38px; border:2px solid rgba(125,42,53,.5); border-radius:14px; z-index:4}
+body.js .cue{display:block}
+.cue::before{content:''; position:absolute; left:50%; top:7px; width:4px; height:8px; margin-left:-2px; border-radius:3px; background:var(--gold); animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%{transform:translateY(0);opacity:1}70%{transform:translateY(12px);opacity:0}100%{transform:translateY(0);opacity:0}}
+
+/* Появление hero при загрузке */
+@keyframes pop{from{opacity:0; transform:translateY(14px) scale(.97)} to{opacity:1; transform:none}}
+body.js .hero-in>*{animation:pop .7s cubic-bezier(.2,.7,.3,1) both}
+body.js .hero-in>*:nth-child(1){animation-delay:.02s}
+body.js .hero-in>*:nth-child(2){animation-delay:.08s}
+body.js .hero-in>*:nth-child(3){animation-delay:.16s}
+body.js .hero-in>*:nth-child(4){animation-delay:.24s}
+body.js .hero-in>*:nth-child(5){animation-delay:.32s}
+body.js .hero-in>*:nth-child(6){animation-delay:.40s}
+body.js .hero-in>*:nth-child(7){animation-delay:.48s}
+body.js .hero-in>.hero-stats{animation:none}
+
+/* Счётчики в hero */
+.hero-stats{display:flex; gap:0; margin-top:34px; border-top:1px solid rgba(125,42,53,.22); padding-top:22px; flex-wrap:wrap}
+.hstat{padding:0 38px 8px 0}
+.hstat b{display:block; font-family:'Playfair Display',Georgia,serif; font-size:clamp(26px,3vw,38px); color:var(--gold); font-weight:600; line-height:1.15}
+.hstat>span{font-size:12.5px; color:var(--muted); letter-spacing:.04em}
+@media (max-width:760px){.hstat{padding:0 22px 10px 0}}
+
+/* Бегущая строка */
+.marquee{border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--bg2); overflow:hidden; padding:13px 0; position:relative}
+.marquee-track{display:flex; width:max-content; animation:marq 32s linear infinite}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-track span{white-space:nowrap; font-family:'Jost',sans-serif; font-size:12.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); padding:0 20px; display:flex; align-items:center; gap:40px}
+.marquee-track span::after{content:'◆'; color:var(--gold); font-size:8px}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* Reveal при скролле + каскад */
+body.js .rv{opacity:0; transform:translateY(26px); transition:opacity .8s cubic-bezier(.2,.7,.3,1), transform .8s cubic-bezier(.2,.7,.3,1)}
+body.js .rv.in{opacity:1; transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  body.js .rv{opacity:1; transform:none; transition:none}
+  .marquee-track{animation:none}
+  .cue::before{animation:none}
+  body.js .hero-in>*{animation:none}
+}
+
+/* ===== Эстетика полей форм (вместо «белых квадратов») ===== */
+.c-form input, .c-form select, .c-form textarea,
+.modal .input, .modal textarea, .modal select {
+  border:1.5px solid #e0d4bd; border-radius:14px; padding:13px 15px;
+  background:linear-gradient(180deg,#fdfbf6,#f9f4ea); color:var(--text);
+  box-shadow:inset 0 2px 5px rgba(70,20,28,.05);
+  transition:border-color .2s, box-shadow .2s, background .2s;
+  appearance:none; -webkit-appearance:none; font-family:inherit; font-size:14px; outline:none;
+}
+.c-form input::placeholder, .c-form textarea::placeholder,
+.modal .input::placeholder, .modal textarea::placeholder { color:#b3a58f; }
+.c-form input:focus, .c-form select:focus, .c-form textarea:focus,
+.modal .input:focus, .modal textarea:focus, .modal select:focus {
+  border-color:var(--gold); background:#fff;
+  box-shadow:0 0 0 4px rgba(125,42,53,.10), inset 0 1px 3px rgba(70,20,28,.04);
+}
+.c-form select, .modal select {
+  padding-right:42px; cursor:pointer;
+  background-image:url("img/select-arrow.svg");
+  background-repeat:no-repeat; background-position:right 14px center;
+}
+.modal .input { width:100%; margin-bottom:10px; }
+.dl-card{flex:1;min-width:240px;text-decoration:none;background:linear-gradient(180deg,#fdfbf6,#f9f4ea);border:1.5px solid #e0d4bd;border-radius:16px;padding:15px 17px;display:flex;gap:13px;align-items:center;box-shadow:0 4px 14px rgba(70,20,28,.05);transition:transform .18s, box-shadow .18s, border-color .18s}
+.dl-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(70,20,28,.10);border-color:#d8c39a}
+.dl-card .dl-ic{width:42px;height:42px;flex:none;border-radius:50%;background:var(--gold);color:#efe8dc;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(212,175,55,.55)}
+.dl-card .dl-tx b{color:var(--gold);font-size:14.5px;display:block;line-height:1.3}
+.dl-card .dl-tx span{color:var(--muted);font-size:12.5px;line-height:1.4;display:block;margin-top:2px}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BeautySalon","name":"Салон красоты КЛИО","url":"https://myclio.ru/","image":"https://myclio.ru/img/klio-resepshen.webp","email":"mycliomy@gmail.com","telephone":"+7 929 522-34-39","priceRange":"₽₽","currenciesAccepted":"RUB","address":{"@type":"PostalAddress","postalCode":"107143","addressLocality":"Москва","streetAddress":"Открытое шоссе, 23 корп. 4","addressCountry":"RU"},"geo":{"@type":"GeoCoordinates","latitude":55.82544,"longitude":37.75059},"openingHoursSpecification":{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"10:00","closes":"21:00"},"sameAs":["https://yandex.ru/maps/org/klio/24660932013/","https://vk.com/kliosalon","https://www.instagram.com/klio_moscow/"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"КЛИО — салон красоты у м. Бульвар Рокоссовского","url":"https://myclio.ru/","inLanguage":"ru"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Как записаться в салон красоты КЛИО?","acceptedAnswer":{"@type":"Answer","text":"Оставьте заявку в форме на сайте, позвоните по телефону +7 (929) 522-34-39 или напишите в WhatsApp. Администратор перезвонит в течение 10 минут и подберёт удобное время."}},
+{"@type":"Question","name":"Где находится салон КЛИО?","acceptedAnswer":{"@type":"Answer","text":"Москва, Открытое шоссе, 23 корп. 4 — 5 минут пешком от станции метро Бульвар Рокоссовского."}},
+{"@type":"Question","name":"В какие часы работает салон?","acceptedAnswer":{"@type":"Answer","text":"Ежедневно с 10:00 до 21:00, по предварительной записи."}},
+{"@type":"Question","name":"Можно ли купить подарочный сертификат?","acceptedAnswer":{"@type":"Answer","text":"Да, сертификат на любую сумму от 1 000 ₽ или на конкретную услугу. Действует 6 месяцев, оформляется в подарочный конверт."}}
+]}
+</script>
+</head>
+<body>
+<header class="site" id="header">
+  <div class="header-row"> <a class="logo" href="#page-main"> <span class="logo-img-wrap"><img src="img/klio-logo-180.jpg?v=20261023" alt="КЛИО" style="width:50px;height:50px;object-fit:cover;"></span> <span><span class="logo-name">КЛИО</span><br><span class="logo-sub">место, где о тебе заботятся</span></span> </a> <nav class="site" id="nav"><a href="#page-main">Главная</a><a href="#page-services">Услуги</a><a href="#page-prices">Цены</a><a href="#page-reviews">Отзывы</a><a href="#page-zapis">Запись</a><a href="#page-certs">Сертификаты</a><a href="#page-contacts">Контакты</a></nav> <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button> <a class="header-phone" href="tel:+79295223439" data-goal="click_phone" style="text-decoration:none;">+7 (929) 522-34-39<small>10:00 — 21:00, по записи</small></a> </div>
+</header>
+<main> <div class="page" id="page-services">
+<section class="section" style="padding-top:48px;"> <div class="container"> <div class="section-head"><div><div class="tag">Услуги салона</div><h2>Всё для вашей красоты</h2></div><a class="btn js-book" href="#page-zapis" style="width:auto;">Записаться →</a></div> <div class="svc-grid"> <a class="svc js-book-svc" href="#page-zapis" data-svc="Парикмахерские услуги"><img src="img/klio-strizhka-brashing.webp?v=20261023" alt="Стрижка и укладка брашингом в парикмахерском зале салона КЛИО, Москва" title="Парикмахерский зал — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Парикмахерский зал</b><span>стрижки · окрашивание · уходы · укладки</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Маникюр"><img src="img/klio-manikyur-gel-lak.webp?v=20261023" alt="Аппаратный маникюр с покрытием гель-лак в салоне красоты КЛИО, Москва" title="Маникюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Маникюр</b><span>аппаратный · комбинированный · дизайн</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Педикюр"><img src="img/klio-pedikyur-spa.webp?v=20261023" alt="СПА-педикюр: уход за стопами в салоне красоты КЛИО, Москва" title="Педикюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Педикюр</b><span>аппаратный · СПА · покрытие</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Массаж / СПА"><img src="img/klio-massazh-spiny.webp?v=20261023" alt="Классический массаж спины в салоне красоты КЛИО, Москва" title="Массаж и СПА — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Массаж</b><span>классический · спортивный · антистресс</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Косметология"><img src="img/klio-kosmetologiya-maska.webp?v=20261023" alt="Косметология: уходовая маска для лица в салоне красоты КЛИО, Москва" title="Косметология — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Косметология</b><span>чистка · уходы · массаж лица</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Макияж / брови"><img src="img/klio-brovi-korrekciya.webp?v=20261023" alt="Оформление и коррекция бровей в салоне красоты КЛИО, Москва" title="Макияж и брови — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Макияж и брови</b><span>вечерний · свадебный · коррекция</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Солярий"><img src="img/klio-solyariy.webp?v=20261023" alt="Вертикальный солярий в салоне красоты КЛИО, Москва" title="Солярий — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Солярий</b><span>вертикальный · абонементы</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Массаж / СПА"><img src="img/klio-spa-programmy.jpg?v=20261023" alt="СПА-программы" loading="lazy" decoding="async"><div class="svc-body"><b>СПА-программы</b><span>ритуалы для тела и души</span></div></a> </div> <div style="margin-top:26px;text-align:center;"><a class="btn btn-gold js-book" href="#page-zapis">Записаться онлайн →</a></div> </div>
+</section>
+</div> <div class="page" id="page-prices">
+<section class="section" style="padding-top:48px;"> <div class="container"> <div class="section-head"><div><div class="tag">Прайс-лист</div><h2>Цены на услуги</h2></div><a class="btn js-book" href="#page-zapis" style="width:auto;">Записаться →</a></div> <div class="price-grid"> <div class="price-card"><div class="pimg"><img src="img/klio-strizhka-brashing.webp?v=20261023" alt="Стрижка и укладка брашингом в парикмахерском зале салона КЛИО, Москва" title="Парикмахерский зал — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Парикмахерский зал</h3> <div class="p-row"><span>Женская стрижка</span><b>от 1 200 ₽</b></div> <div class="p-row"><span>Мужская стрижка</span><b>от 800 ₽</b></div> <div class="p-row"><span>Детская стрижка</span><b>от 700 ₽</b></div> <div class="p-row"><span>Окрашивание (любой сложности)</span><b>от 3 500 ₽</b></div> <div class="p-row"><span>Мелирование / airtouch</span><b>от 4 500 ₽</b></div> <div class="p-row"><span>Укладка</span><b>от 1 000 ₽</b></div> <div class="p-row"><span>Кератиновое выпрямление</span><b>от 4 000 ₽</b></div> <div class="p-row"><span>Массаж головы</span><b>1 200 ₽</b></div> </div></div> <div class="price-card"><div class="pimg"><img src="img/klio-manikyur-gel-lak.webp?v=20261023" alt="Аппаратный маникюр с покрытием гель-лак в салоне красоты КЛИО, Москва" title="Маникюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Маникюр</h3> <div class="p-row"><span>Маникюр аппаратный</span><b>от 1 400 ₽</b></div> <div class="p-row"><span>Маникюр комбинированный</span><b>от 1 600 ₽</b></div> <div class="p-row"><span>Покрытие гель-лак</span><b>от 1 000 ₽</b></div> <div class="p-row"><span>Наращивание ногтей</span><b>от 2 500 ₽</b></div> <div class="p-row"><span>Дизайн (френч, стемпинг, роспись)</span><b>от 200 ₽</b></div> </div></div> <div class="price-card"><div class="pimg"><img src="img/klio-pedikyur-spa.webp?v=20261023" alt="СПА-педикюр: уход за стопами в салоне красоты КЛИО, Москва" title="Педикюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Педикюр</h3> <div class="p-row"><span>Педикюр аппаратный</span><b>от 2 200 ₽</b></div> <div class="p-row"><span>Педикюр СПА</span><b>от 2 800 ₽</b></div> </div></div> <div class="price-card"><div class="pimg"><img src="img/klio-massazh-spiny.webp?v=20261023" alt="Классический массаж спины в салоне красоты КЛИО, Москва" title="Массаж и СПА — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Массаж и СПА</h3> <div class="p-row"><span>Классический массаж (60 мин)</span><b>от 2 800 ₽</b></div> <div class="p-row"><span>Спортивный массаж</span><b>от 3 000 ₽</b></div> <div class="p-row"><span>Антистресс-массаж</span><b>от 2 600 ₽</b></div> <div class="p-row"><span>Массаж спины (30 мин)</span><b>от 1 500 ₽</b></div> <div class="p-row"><span>Массаж лица</span><b>от 1 800 ₽</b></div> <div class="p-row"><span>СПА-программа для тела</span><b>от 4 500 ₽</b></div> </div></div> <div class="price-card"><div class="pimg"><img src="img/klio-kosmetologiya-maska.webp?v=20261023" alt="Косметология: уходовая маска для лица в салоне красоты КЛИО, Москва" title="Косметология — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Косметология</h3> <div class="p-row"><span>Чистка лица</span><b>от 2 500 ₽</b></div> <div class="p-row"><span>Уходовая программа</span><b>от 3 000 ₽</b></div> <div class="p-row"><span>Пилинг</span><b>от 2 800 ₽</b></div> <div class="p-row"><span>Макияж дневной</span><b>от 1 800 ₽</b></div> <div class="p-row"><span>Макияж вечерний / свадебный</span><b>от 2 500 ₽</b></div> <div class="p-row"><span>Коррекция и окрашивание бровей</span><b>от 1 200 ₽</b></div> </div></div> <div class="price-card"><div class="pimg"><img src="img/klio-solyariy.webp?v=20261023" alt="Вертикальный солярий в салоне красоты КЛИО, Москва" title="Солярий — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"></div><div class="pbody"><h3>Солярий</h3> <div class="p-row"><span>Солярий (1 минута)</span><b>от 60 ₽</b></div> <div class="p-row"><span>Солярий (4 минуты)</span><b>от 250 ₽</b></div> </div></div> </div> <div style="margin-top:24px;text-align:center;"><a class="btn btn-gold js-book" href="#page-zapis">Записаться онлайн →</a></div> </div>
+</section>
+</div> <div class="page" id="page-reviews">
+<section class="section" style="padding-top:48px;"> <div class="container"> <div class="section-head"> <div><div class="tag">Отзывы гостей</div><h2>Нам доверяют</h2></div> <a class="rating-pill" href="https://yandex.ru/maps/org/klio/24660932013/" target="_blank" rel="noopener" data-goal="click_rating" title="Читать отзывы на Яндекс.Картах">★ 5,0 · 100 оценок на Яндекс.Картах</a> </div> <div class="rev-grid"> <div class="rev"><div class="stars">★★★★★</div><p>Делала окрашивание и стрижку — результат превзошёл ожидания! Мастер подобрала уход именно для моего типа волос, всё объяснила. Атмосфера очень уютная, чай предложили.</p><div class="who"><div class="ava">А</div><div><b>Анна</b><small>окрашивание, стрижка</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Лучший массаж в районе! Хожу уже полгода, спина благодарит. Записываюсь заранее на месяц вперёд — мастер на вес золота.</p><div class="who"><div class="ava">Д</div><div><b>Дмитрий</b><small>спортивный массаж</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Маникюр держится третью неделю — впервые такое! Аппаратный маникюр аккуратный, безопасный, дизайн сделали именно такой, как просила.</p><div class="who"><div class="ava">М</div><div><b>Мария</b><small>маникюр, покрытие</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Педикюр — это отдельная любовь. СПА-уход с пилингом и маской, ноги как у младенца. Мастер стерильность соблюдает идеально.</p><div class="who"><div class="ava">Е</div><div><b>Екатерина</b><small>педикюр СПА</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Чистка лица прошла на высшем уровне: без боли, без покраснений, кожа сияет неделю. Теперь только сюда.</p><div class="who"><div class="ava">О</div><div><b>Ольга</b><small>косметология</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Стригусь здесь больше года. Всегда чётко по времени, без ожидания, результат стабильно отличный. Рекомендую.</p><div class="who"><div class="ava">С</div><div><b>Сергей</b><small>мужская стрижка</small></div></div></div> </div> <div style="margin-top:26px;text-align:center;"><a class="btn btn-gold js-book" href="#page-zapis">Станьте нашим гостем →</a></div> </div>
+</section> </div> <div class="page" id="page-contacts">
+<section class="section" style="padding-top:48px;"> <div class="container"> <div class="section-head"><div><div class="tag">Контакты</div><h2>Мы ждём вас</h2></div></div> <div class="contacts-grid"> <div class="c-card"> <h3>Как нас найти</h3> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <div>Москва, Открытое шоссе, 23 корп. 4<small>5 минут пешком от м. Бульвар Рокоссовского</small></div> </div> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg> <div><a href="tel:+79295223439" data-goal="click_phone" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(212,175,55,.55);">+7 (929) 522-34-39</a><small>Звоните или пишите в WhatsApp</small></div> </div> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg> <div><a href="mailto:mycliomy@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(212,175,55,.55);">mycliomy@gmail.com</a><small>Пишите — отвечаем в течение дня</small></div> </div> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> <div>Ежедневно 10:00 — 21:00<small>Работаем по предварительной записи</small></div> </div> <div class="map-facade" id="mapFacade" role="button" tabindex="0" aria-label="Показать интерактивную карту"> <img src="img/klio-karta.webp?v=20261023" alt="Карта проезда: салон красоты КЛИО, Открытое шоссе 23 корп. 4, Москва" width="1120" height="520" loading="lazy" decoding="async"> <span class="map-facade-btn">Показать интерактивную карту</span> </div> <div style="display:flex;gap:10px;flex-wrap:wrap;"> <a class="btn btn-sm btn-gold" style="text-decoration:none;" href="https://yandex.ru/maps/?rtext=~55.82544,37.75059" target="_blank" rel="noopener" data-goal="click_route">🧭 Построить маршрут</a> <a class="btn btn-sm" style="text-decoration:none;" href="https://wa.me/79295223439?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D0%B0%D1%82%D1%8C%D1%81%D1%8F%20%D0%B2%20%D0%9A%D0%9B%D0%98%D0%9E" target="_blank" rel="noopener" data-goal="click_whatsapp">Написать в WhatsApp</a> <a class="btn btn-sm" style="text-decoration:none;" href="https://yandex.ru/maps/org/klio/24660932013/" target="_blank" rel="noopener">Мы на Яндекс.Картах</a> </div> <div style="display:flex;align-items:center;gap:10px;margin-top:2px;"> <span style="font-size:13px;color:var(--muted);">Мы в соцсетях:</span> <a class="soc" href="https://vk.com/kliosalon" target="_blank" rel="noopener" aria-label="ВКонтакте">VK</a> <a class="soc" href="https://www.instagram.com/klio_moscow/" target="_blank" rel="noopener" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg></a> </div> </div> <div class="c-card"> <h3>Онлайн-запись</h3> <div class="hint" style="margin-bottom:14px;">Оставьте заявку — администратор перезвонит в течение 10 минут и подберёт удобное время.</div> <form class="c-form" id="ctForm" novalidate> <input type="text" id="ctName" placeholder="Ваше имя" required autocomplete="name"> <input type="tel" id="ctPhone" placeholder="Телефон" required inputmode="tel" autocomplete="tel"> <select id="ctService"> <option>Парикмахерские услуги</option> <option>Маникюр</option> <option>Педикюр</option> <option>Массаж / СПА</option> <option>Косметология</option> <option>Макияж / брови</option> <option>Солярий</option> </select> <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"> <label style="font-size:12px;color:var(--muted);">Желаемая дата<input type="date" id="ctDateD" style="margin-top:4px;"></label> <label style="font-size:12px;color:var(--muted);">Желаемое время<input type="time" id="ctDateT" style="margin-top:4px;"></label> </div> <textarea rows="3" id="ctComment" placeholder="Комментарий (необязательно)"></textarea> <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:12px;"> <input type="checkbox" id="ctPd"> <span>Согласен(на) на обработку <a href="#page-privacy" style="color:var(--gold);text-decoration:underline;">персональных данных</a></span> </label> <div class="hp-field" aria-hidden="true"><input type="text" id="ctHp" tabindex="-1" autocomplete="off"></div> <button class="btn btn-gold" type="submit" style="width:100%;">Отправить заявку</button> </form> <div id="ctOk" style="display:none;text-align:center;padding:24px 0;color:var(--gold);font-size:17px;"> ✓ Благодарим за вашу заявку!<br> <small style="color:var(--muted);display:block;margin-top:8px;">В ближайшее время наш специалист свяжется с вами для подтверждения записи.</small> </div> </div> </div> <div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line,#e0d4bd);text-align:center;"> <span style="font-size:13px;color:var(--muted);display:block;margin-bottom:10px;">Также мы ведём запись на платформе Dikidi:</span> <a class="btn" href="https://dikidi.net/1817173" target="_blank" rel="noopener" style="width:auto;">Записаться через Dikidi →</a> </div> </div>
+</section>
+</div> <div class="page" id="page-certs">
+<section class="section" style="padding-top:48px;"> <div class="container"> <div class="section-head"> <div><div class="tag">Подарки и выгода</div><h2>Сертификаты и абонементы</h2></div> </div> <div class="split" style="margin-bottom:36px;"> <div> <div class="tag">Подарочный сертификат</div> <h2>Подарите эмоции, которые останутся в памяти</h2> <p>Сертификат на любую услугу салона или на любую сумму от 1 000 ₽. Оставьте заявку — администратор свяжется для оплаты удобным способом, а красивый сертификат в конверте будет ждать получателя в салоне или приедет с курьером. Действует 6 месяцев.</p> <div class="feats-list"> <div><b>На любую сумму</b><br>от 1 000 ₽ · на любую услугу</div> <div><b>6 месяцев</b><br>срок действия с момента покупки</div> <div><b>Оформление в подарок</b><br>конверт + открытка с вашим текстом</div> <div><b>Доставка</b><br>самовывоз или курьер по Москве</div> </div> </div> <div class="c-card"> <h3>Заявка на сертификат</h3> <form class="c-form" id="certForm" novalidate> <input type="text" id="certName" placeholder="Ваше имя" required autocomplete="name"> <input type="tel" id="certPhone" placeholder="Телефон" required inputmode="tel" autocomplete="tel"> <select id="certType"> <option>Сертификат на сумму (укажите в комментарии)</option> <option>Массаж и СПА</option> <option>Парикмахерские услуги</option> <option>Маникюр / педикюр</option> <option>Косметология</option> <option>Солярий</option> </select> <input type="text" id="certSum" placeholder="Номинал (например: 3 000 ₽) или услуга"> <textarea rows="2" id="certText" placeholder="Текст для открытки (необязательно)"></textarea> <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:12px;"> <input type="checkbox" id="certPd"> <span>Согласен(на) на обработку <a href="#page-privacy" style="color:var(--gold);text-decoration:underline;">персональных данных</a></span> </label> <div class="hp-field" aria-hidden="true"><input type="text" id="certHp" tabindex="-1" autocomplete="off"></div> <button class="btn btn-gold" type="submit" style="width:100%;">Оставить заявку</button> </form> <div id="certOk" style="display:none;text-align:center;padding:24px 0;color:var(--gold);font-size:16px;"> ✓ Благодарим за вашу заявку!<br> <small style="color:var(--muted);">В ближайшее время наш специалист свяжется с вами для подтверждения записи.</small> </div> </div> </div> <div class="tag">Абонементы</div> <h2 style="margin-bottom:20px;">Выгода для постоянных гостей</h2> <div class="price-grid"> <div class="price-card"><div class="pbody" style="padding:22px;"> <h3>Массаж — 5 + 1 в подарок</h3> <div class="p-row"><span>Абонемент на 6 массажей</span><b>14 000 ₽</b></div> <div class="p-row"><span>Вместо</span><b style="text-decoration:line-through;color:var(--muted);">16 800 ₽</b></div> <div class="hint" style="margin-top:8px;">Любые 60-минутные массажи · срок 4 месяца · можно делиться с близкими</div> <a class="btn btn-gold js-book" href="#page-zapis" style="margin-top:14px;width:100%;">Оставить заявку →</a> </div></div> <div class="price-card"><div class="pbody" style="padding:22px;"> <h3>Солярий — 10 посещений</h3> <div class="p-row"><span>Абонемент 10 × 10 минут</span><b>2 500 ₽</b></div> <div class="p-row"><span>Вместо</span><b style="text-decoration:line-through;color:var(--muted);">3 000 ₽</b></div> <div class="hint" style="margin-top:8px;">Срок 3 месяца · гость салона может занимать очередь по записи</div> <a class="btn btn-gold js-book" href="#page-zapis" style="margin-top:14px;width:100%;">Оставить заявку →</a> </div></div> <div class="price-card"><div class="pbody" style="padding:22px;"> <h3>Маникюр + покрытие — 4 визита</h3> <div class="p-row"><span>4 визита к мастеру</span><b>8 900 ₽</b></div> <div class="p-row"><span>Вместо</span><b style="text-decoration:line-through;color:var(--muted);">9 600 ₽</b></div> <div class="hint" style="margin-top:8px;">Аппаратный маникюр + гель-лак · срок 3 месяца · приоритетная запись</div> <a class="btn btn-gold js-book" href="#page-zapis" style="margin-top:14px;width:100%;">Оставить заявку →</a> </div></div> <div class="price-card"><div class="pbody" style="padding:22px;"> <h3>СПА-день для двоих</h3> <div class="p-row"><span>Массаж + педикюр + уход за лицом</span><b>12 000 ₽</b></div> <div class="p-row"><span>Вместо</span><b style="text-decoration:line-through;color:var(--muted);">14 200 ₽</b></div> <div class="hint" style="margin-top:8px;">Для двоих · один день · чайная церемония в подарок · срок 6 месяцев</div> <a class="btn btn-gold js-book" href="#page-zapis" style="margin-top:14px;width:100%;">Оставить заявку →</a> </div></div> </div> <div class="disclaimer">Абонементы действуют с момента покупки, не являются именными (можно передавать), возврат неиспользованных занятий — по правилам салона.</div> </div>
+</section>
+</div> <div class="page" id="page-zapis">
+<section class="section" style="padding-top:48px;"> <div class="container" style="max-width:640px;"> <div class="section-head"><div><div class="tag">Онлайн-запись</div><h2>Записаться в салон</h2></div></div> <div class="c-card"> <form class="c-form" id="zapisForm" novalidate> <input type="text" id="zapisName" placeholder="Ваше имя" required autocomplete="name"> <input type="tel" id="zapisPhone" placeholder="Телефон" required inputmode="tel" autocomplete="tel"> <select id="zapisService"> <option>Парикмахерские услуги</option> <option>Маникюр</option> <option>Педикюр</option> <option>Массаж / СПА</option> <option>Косметология</option> <option>Макияж / брови</option> <option>Солярий</option> </select>  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"> <label style="font-size:12px;color:var(--muted);">Желаемая дата<input type="date" id="zapisDateD" style="margin-top:4px;"></label> <label style="font-size:12px;color:var(--muted);">Желаемое время<input type="time" id="zapisDateT" style="margin-top:4px;"></label> </div> <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:12px;"> <input type="checkbox" id="zapisPd"> <span>Согласен(на) на обработку <a href="#page-privacy" style="color:var(--gold);text-decoration:underline;">персональных данных</a></span> </label> <div class="hp-field" aria-hidden="true"><input type="text" id="zapisHp" tabindex="-1" autocomplete="off"></div> <button class="btn btn-gold" type="submit" style="width:100%;">Записаться</button> </form> <div id="zapisOk" style="display:none;text-align:center;padding:24px 0;color:var(--gold);font-size:17px;"> ✓ Благодарим за вашу заявку!<br> <small style="color:var(--muted);display:block;margin-top:8px;">В ближайшее время наш специалист свяжется с вами для подтверждения записи.</small> <a class="btn" href="#page-main" style="margin-top:18px;width:auto;">На главную →</a> </div> <div class="hint" style="margin-top:14px;">Или позвоните: <a href="tel:+79295223439" data-goal="click_phone" style="color:var(--gold);font-weight:700;text-decoration:none;">+7 (929) 522-34-39</a> · Ежедневно 10:00–21:00</div> </div> </div>
+</section>
+</div> <div class="page" id="page-main">
+<section class="hero"> <canvas id="weave" aria-hidden="true"></canvas> <div class="cue" aria-hidden="true"></div> <div class="container"> <div class="hero-in"> <a class="rating-pill" href="https://yandex.ru/maps/org/klio/24660932013/" target="_blank" rel="noopener" data-goal="click_rating" title="Читать отзывы на Яндекс.Картах">★ 5,0 · 100 оценок на Яндекс.Картах</a> <div class="hero-tag">Красота — это отношение к себе</div> <h1>Салон красоты КЛИО <br><em>у метро Бульвар Рокоссовского</em></h1> <p>Полный спектр услуг: парикмахерский зал, ногтевой сервис, массаж и СПА, косметология, солярий. Работаем по предварительной записи каждый день с 10:00 до 21:00.</p> <div style="display:flex;gap:14px;flex-wrap:wrap;"> <a class="btn btn-gold js-book" href="#page-zapis">Записаться онлайн →</a> <a class="btn" href="#page-prices">Цены</a> </div> <div class="hero-feats"> <span>10:00 — 21:00 ежедневно</span> <span>Опытные мастера</span> <span>Профессиональная косметика</span> <span>5 минут от метро</span> </div> <div class="hero-stats rv"><div class="hstat"><b><span data-count="5" data-fixed="1" data-rt="val">5,0</span></b><span>рейтинг на Яндекс.Картах</span></div> <div class="hstat"><b><span data-count="100" data-rt="cnt">100</span></b><span>оценок на Яндекс.Картах</span></div> <div class="hstat"><b><span data-count="8">8</span></b><span>направлений услуг</span></div> <div class="hstat"><b><span data-count="11">11</span></b><span>часов работы ежедневно</span></div> </div> </div> </div>
+</section> <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"><span>Парикмахерский зал</span><span>Маникюр</span><span>Педикюр</span><span>Массаж и СПА</span><span>Косметология</span><span>Макияж и брови</span><span>Солярий</span><span>Онлайн-запись</span><span>10:00 — 21:00 ежедневно</span><span>5 минут от метро</span></div></div> <section class="section"> <div class="container"> <div class="section-head"><div><div class="tag">Наши услуги</div><h2>Всё для вашей красоты</h2></div><a href="#page-services" style="color:var(--muted);font-size:14px;">Все услуги →</a></div> <div class="svc-grid"> <a class="svc js-book-svc" href="#page-zapis" data-svc="Парикмахерские услуги"><img src="img/klio-strizhka-brashing.webp?v=20261023" alt="Стрижка и укладка брашингом в парикмахерском зале салона КЛИО, Москва" title="Парикмахерский зал — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Парикмахерский зал</b><span>стрижки, окрашивание, уход</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Маникюр"><img src="img/klio-manikyur-gel-lak.webp?v=20261023" alt="Аппаратный маникюр с покрытием гель-лак в салоне красоты КЛИО, Москва" title="Маникюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Маникюр</b><span>аппаратный, покрытие, дизайн</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Массаж / СПА"><img src="img/klio-massazh-spiny.webp?v=20261023" alt="Классический массаж спины в салоне красоты КЛИО, Москва" title="Массаж и СПА — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Массаж и СПА</b><span>классический, спортивный, антистресс</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Косметология"><img src="img/klio-kosmetologiya-maska.webp?v=20261023" alt="Косметология: уходовая маска для лица в салоне красоты КЛИО, Москва" title="Косметология — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Косметология</b><span>чистка, уходы, массаж лица</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Макияж / брови"><img src="img/klio-brovi-korrekciya.webp?v=20261023" alt="Визажист салона красоты КЛИО наносит макияж, Москва" title="Макияж и брови — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Макияж и брови</b><span>вечерний, свадебный, коррекция</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Солярий"><img src="img/klio-solyariy.webp?v=20261023" alt="Вертикальный солярий в салоне красоты КЛИО, Москва" title="Солярий — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Солярий</b><span>вертикальный, 4 минуты — от 250 ₽</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Педикюр"><img src="img/klio-pedikyur-spa.webp?v=20261023" alt="СПА-педикюр: уход за стопами в салоне красоты КЛИО, Москва" title="Педикюр — салон красоты КЛИО, м. Бульвар Рокоссовского" loading="lazy" decoding="async" width="800" height="1000"><div class="svc-body"><b>Педикюр</b><span>аппаратный, комбинированный, СПА</span></div></a> <a class="svc js-book-svc" href="#page-zapis" data-svc="Массаж / СПА"><img src="img/klio-spa-programmy.jpg?v=20261023" alt="СПА-программы" loading="lazy" decoding="async"><div class="svc-body"><b>СПА-программы</b><span>ритуалы для тела и души</span></div></a></div> </div>
+</section> <section class="section alt"> <div class="container"> <div class="split"> <img src="img/klio-resepshen.webp?v=20261023" alt="Ресепшен салона красоты КЛИО — золотая стойка и зеркальный коридор, Москва" title="Входная группа салона КЛИО · м. Бульвар Рокоссовского" loading="lazy" decoding="async"> <div> <div class="tag">Салон</div> <h2>Пространство, в которое хочется возвращаться</h2> <p>Уютный современный интерьер, атмосфера спокойствия и внимание к деталям. Каждая зона салона оборудована профессиональной техникой, а мастера работают на косметике премиум-класса.</p> <p>Ждём вас по адресу: Москва, Открытое шоссе, 23 корп. 4 — в 5 минутах пешком от метро Бульвар Рокоссовского.</p> <a class="btn btn-gold js-book" href="#page-zapis" style="margin-top:8px;">Записаться →</a> </div> </div> </div>
+</section>  <section class="section alt"> <div class="container"> <div class="section-head"><div><div class="tag">Отзывы</div><h2>Что говорят гости</h2></div><a href="#page-reviews" style="color:var(--muted);font-size:14px;">Все отзывы →</a></div> <div class="rev-grid"> <div class="rev"><div class="stars">★★★★★</div><p>Делала окрашивание и стрижку — результат превзошёл ожидания! Мастер посоветовала уход именно для моего типа волос. Атмосфера очень уютная.</p><div class="who"><div class="ava">А</div><div><b>Анна</b><small>окрашивание, стрижка</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Лучший массаж в районе! Хожу к мастеру на спортивный массаж уже полгода, спина благодарит. Записываюсь заранее на месяц вперёд.</p><div class="who"><div class="ava">Д</div><div><b>Дмитрий</b><small>спортивный массаж</small></div></div></div> <div class="rev"><div class="stars">★★★★★</div><p>Маникюр держится третью неделю — впервые такое! Аппаратный маникюр безопасный, аккуратный, дизайн сделали именно такой, как я просила.</p><div class="who"><div class="ava">М</div><div><b>Мария</b><small>маникюр, покрытие</small></div></div></div> </div> </div>
+</section> <section class="section alt" id="main-contacts"> <div class="container"> <div class="section-head"><div><div class="tag">Мы ждём вас</div><h2>Контакты и часы работы</h2></div><a href="#page-contacts" style="color:var(--muted);font-size:14px;">Все контакты →</a></div> <div class="contacts-grid"> <div class="c-card"> <h3>Салон красоты «Клио»</h3> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> <div>Москва, Открытое шоссе, 23 корп. 4<small>5 минут пешком от м. Бульвар Рокоссовского</small></div> </div> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> <div>Ежедневно 10:00 — 21:00<small>Работаем по предварительной записи</small></div> </div> <div class="c-row"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg> <div><a href="tel:+79295223439" data-goal="click_phone" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(212,175,55,.55);">+7 (929) 522-34-39</a><small>Звонки и WhatsApp</small><br><a href="mailto:mycliomy@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(212,175,55,.55);font-size:14px;">mycliomy@gmail.com</a></div> </div> <div style="display:flex;gap:10px;flex-wrap:wrap;"> <a class="btn btn-sm btn-gold" style="text-decoration:none;" href="https://yandex.ru/maps/?rtext=~55.82544,37.75059" target="_blank" rel="noopener" data-goal="click_route">🧭 Построить маршрут</a> <a class="btn btn-sm" style="text-decoration:none;" href="https://wa.me/79295223439?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D0%B0%D1%82%D1%8C%D1%81%D1%8F%20%D0%B2%20%D0%9A%D0%9B%D0%98%D0%9E" target="_blank" rel="noopener" data-goal="click_whatsapp">WhatsApp</a> <a class="btn btn-sm" style="text-decoration:none;" href="#page-contacts">Форма заявки →</a> </div> </div> <a href="https://yandex.ru/maps/?rtext=~55.82544,37.75059" target="_blank" rel="noopener" data-goal="click_route" style="display:block;border-radius:14px;overflow:hidden;border:1px solid var(--line);min-height:280px;text-decoration:none;" aria-label="Построить маршрут в Яндекс.Картах"> <img src="img/klio-karta.webp?v=20261023" alt="Карта проезда к салону КЛИО: Открытое шоссе 23 корп. 4 — нажмите, чтобы построить маршрут" width="1120" height="520" loading="lazy" decoding="async" style="display:block;width:100%;height:100%;object-fit:cover;min-height:280px;"> </a> </div> <div style="margin-top:44px;padding-top:34px;border-top:1px solid var(--line,#e0d4bd);">
+<div class="tag">Приложение КЛИО</div>
+<h2 style="font-size:clamp(21px,3.2vw,28px);margin:6px 0 8px;">Запись в два касания — прямо с телефона</h2>
+<p style="color:var(--muted);font-size:14px;max-width:560px;margin:0 0 18px;">Услуги, цены, выбор мастера и повторная запись без звонка. Приложение бесплатное и занимает меньше мегабайта.</p>
+<div style="display:flex;gap:14px;flex-wrap:wrap;">
+<a class="dl-card" href="app/klio.apk" download data-goal="app_download">
+<span class="dl-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396"/></svg></span>
+<span class="dl-tx"><b>Скачать для Android</b><span>файл APK v1.3 · 0,9 МБ · установка за 20 секунд</span></span></a>
+<a class="dl-card" href="app/" target="_blank" rel="noopener">
+<span class="dl-ic"><svg width="19" height="19" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg></span>
+<span class="dl-tx"><b>Установить на iPhone</b><span>Safari → «Поделиться» → «На экран “Домой”»</span></span></a>
+</div></div> </div>
+</section> </div>
+<div class="page" id="page-privacy"> <section class="section" style="padding-top:48px;"> <div class="container" style="max-width:760px;"> <div class="section-head"><div><div class="tag">Документы</div><h2>Политика конфиденциальности</h2></div></div> <div class="c-card priv" style="padding:26px 28px;">
+<p>Настоящая политика описывает, как салон красоты «Клио» обрабатывает персональные данные посетителей сайта в соответствии с Федеральным законом № 152-ФЗ «О персональных данных».</p>
+<h3>1. Оператор персональных данных</h3>
+<p>Салон красоты «Клио»<br>Адрес: 107143, г. Москва, Открытое шоссе, 23 корп. 4<br>Телефон: <a href="tel:+79295223439" style="color:var(--gold);">+7 (929) 522-34-39</a><br>E-mail: <a href="mailto:mycliomy@gmail.com" style="color:var(--gold);">mycliomy@gmail.com</a><br>Сайт: <a href="https://myclio.ru/" style="color:var(--gold);">myclio.ru</a></p>
+<h3>2. Какие данные мы собираем</h3>
+<ul><li>имя и номер телефона — при записи, покупке сертификата или отправке заявки;</li><li>комментарий к заявке — по вашему желанию;</li><li>технические данные: файлы cookie, сведения о браузере, действия на сайте (через Яндекс.Метрику).</li></ul>
+<h3>3. Цели обработки</h3>
+<ul><li>запись на услуги и подтверждение визита;</li><li>оформление подарочных сертификатов;</li><li>подтверждение записи и консультация по услугам;</li><li>улучшение работы сайта и качества обслуживания.</li></ul>
+<h3>4. Правовые основания</h3>
+<p>Обработка ведётся на основании вашего согласия (ст. 6, 9, 10 ФЗ-152). Согласие вы даёте, отмечая соответствующий пункт в форме. Сведения о здоровье относятся к специальной категории данных и обрабатываются только после отдельного явного согласия.</p>
+<h3>5. Хранение и защита</h3>
+<p>Данные хранятся не дольше, чем требуют цели обработки: заявки — до 1 года. Доступ имеют только администратор и мастер, ведущий вашу запись.</p>
+<h3>6. Передача третьим лицам</h3>
+<p>Данные могут обрабатываться провайдером хостинга и сервисом Яндекс.Метрика (обезличенная статистика). Продажа и передача данных третьим лицам для маркетинга не осуществляется.</p>
+<h3>7. Ваши права и отзыв согласия</h3>
+<p>Вы можете запросить уточнение, блокирование или удаление своих данных, а также отозвать согласие, позвонив по телефону <a href="tel:+79295223439" style="color:var(--gold);">+7 (929) 522-34-39</a>, написав на <a href="mailto:mycliomy@gmail.com" style="color:var(--gold);">mycliomy@gmail.com</a> или обратившись лично по адресу салона. Отзыв согласия действует на будущее и не затрагивает уже выполненную обработку.</p>
+<p style="margin-top:18px;color:var(--muted);font-size:13px;">Редакция от 06.10.2026</p>
+</div> <div style="margin-top:18px;"><a class="btn" href="#page-main" style="width:auto;">На главную →</a></div> </div> </section> </div> </main>
+<footer class="site"> <div class="container footer-in"> <div style="display:flex;align-items:center;gap:10px;"><img src="img/klio-logo-200.jpg?v=20261023" alt="КЛИО" style="width:26px;height:26px;object-fit:cover;border-radius:50%;"><span style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--gold);letter-spacing:.08em;">КЛИО</span><span style="font-size:12px;color:var(--muted);">· место, где о тебе заботятся</span></div> <div>© 2026 Салон красоты «Клио» · <b style="color:#7d2a35;">версия 26.11-Б2</b> · Москва, Открытое шоссе, 23 корп. 4 · <a href="#page-privacy" style="color:var(--gold);">Политика конфиденциальности</a></div> </div>
+</footer>  <div class="modal-bk" id="bookBk"> <div class="modal"> <div id="bookForm"> <h3>Онлайн-запись</h3> <div class="hint">Выберите услугу и удобное время — администратор перезвонит в течение 10 минут для подтверждения.</div> <form class="c-form" id="bkForm"> <input type="text" id="bkName" placeholder="Ваше имя" required> <input type="tel" id="bkPhone" placeholder="Телефон" required> <select id="bkService"> <option>Парикмахерские услуги</option> <option>Маникюр</option> <option>Педикюр</option> <option>Массаж / СПА</option> <option>Косметология</option> <option>Макияж / брови</option> <option>Солярий</option> </select>  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"> <label style="font-size:12px;color:var(--muted);">Желаемая дата<input type="date" id="bkDateD" style="margin-top:4px;"></label> <label style="font-size:12px;color:var(--muted);">Желаемое время<input type="time" id="bkDateT" style="margin-top:4px;"></label> </div> <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);margin:-4px 0 12px;cursor:pointer;"> <input type="checkbox" id="bkConsent"> <span>Согласен(на) на обработку <a href="#page-privacy" style="color:var(--gold);text-decoration:underline;">персональных данных</a></span> </label> <div class="hp-field" aria-hidden="true"><input type="text" id="bkHp" tabindex="-1" autocomplete="off"></div> <button class="btn btn-gold" type="submit" style="width:100%;">Записаться</button> </form> <button class="btn btn-sm" id="bookClose" style="width:100%;margin-top:8px;">Отмена</button> </div> <div class="modal-ok" id="bookOk">✓ Благодарим за вашу заявку!<br><small style="color:var(--muted);">В ближайшее время наш специалист свяжется с вами для подтверждения записи.</small></div> </div>
+</div>
+<script>
+document.getElementById('bookClose').onclick = function(){ document.getElementById('bookBk').classList.remove('open'); };
+document.getElementById('bookBk').onclick = function(e){ if(e.target===this) this.classList.remove('open'); };
+
+</script>
+<script>
+/* Подстановка услуги в форму записи при клике на карточку услуги */
+document.addEventListener('click', function(e){ var t = e.target; if (!t || !t.closest) return; var bs = t.closest('.js-book-svc'); if (!bs) return; var svc = bs.getAttribute('data-svc'); if (!svc) return; var sel = document.getElementById('zapisService'); if (!sel) return; for (var i = 0; i < sel.options.length; i++){ if (sel.options[i].text === svc){ sel.selectedIndex = i; break; } } sel.dispatchEvent(new Event('change'));
+});
+function setVer(mode){ document.body.classList.remove('fpc','fmob','ftab'); if(mode==='pc') document.body.classList.add('fpc'); if(mode==='mob') document.body.classList.add('fmob'); if(mode==='tab') document.body.classList.add('ftab'); try{ localStorage.setItem('klio_ver', mode); }catch(e){} updateBtn();
+}
+function currentVer(){ if(document.body.classList.contains('fpc')) return 'pc'; if(document.body.classList.contains('fmob')) return 'mob'; if(document.body.classList.contains('ftab')) return 'tab'; var w = window.innerWidth; if (w < 761) return 'mob'; if (w <= 1100) return 'tab'; return 'pc';
+}
+function cycleVer(){ var c = currentVer(); if (c === 'pc') return 'tab'; if (c === 'tab') return 'mob'; return 'pc';
+}
+function updateBtn(){ var b = document.getElementById('verToggle'); if(!b) return; var c = currentVer(); var label = (c==='pc') ? '🖥 ПК' : (c==='tab' ? '📱 Планшет' : '📱 Телефон'); b.textContent = label + ' · нажмите: ' + (c==='pc'?'планшет':(c==='tab'?'телефон':'ПК'));
+}
+(function(){ var saved=null; try{ saved=localStorage.getItem('klio_ver'); }catch(e){} if(saved==='pc') document.body.classList.add('fpc'); else if(saved==='mob') document.body.classList.add('fmob'); else if(saved==='tab') document.body.classList.add('ftab'); updateBtn(); window.addEventListener('resize', updateBtn);
+})();
+var _vt1 = document.getElementById('verToggle'); if (_vt1) _vt1.onclick = function(){ setVer(cycleVer()); };
+var _vt2 = document.getElementById('verToggle2');
+if (_vt2) _vt2.onclick = function(){ setVer(cycleVer()); }; </script>
+
+<script>
+/* ================= ДИНАМИКА (по механике сайта-образца) ================= */
+document.body.classList.add('js');
+
+/* SPA-роутер: переключение страниц, активный пункт меню, скролл наверх */
+(function(){
+  var PAGES = ['page-main','page-services','page-prices','page-reviews','page-contacts','page-certs','page-zapis','page-privacy'];
+  function current(){ var h = location.hash.replace('#',''); return PAGES.indexOf(h) !== -1 ? h : null; }
+  function apply(id){
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+    document.querySelectorAll('nav.site a').forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+  }
+  function setPage(){
+    var id = current();
+    if (!id) return; /* якоря модалок (#bookBk и т.п.) страницу не переключают */
+    apply(id);
+    var nav = document.getElementById('nav'), burger = document.getElementById('burger');
+    if (nav) nav.classList.remove('open');
+    if (burger) burger.classList.remove('open');
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', setPage);
+  apply(current() || 'page-main');
+})();
+
+/* Шапка: бургер + скрытие при скролле вниз */
+(function(){
+  var header = document.getElementById('header');
+  var burger = document.getElementById('burger');
+  var nav = document.getElementById('nav');
+  if (burger && nav) burger.addEventListener('click', function(){ burger.classList.toggle('open'); nav.classList.toggle('open'); });
+  var lastY = 0;
+  window.addEventListener('scroll', function(){
+    var y = window.scrollY;
+    header.classList.toggle('scrolled', y > 10);
+    if (y > 320 && y > lastY && !(nav && nav.classList.contains('open'))) header.classList.add('hidden');
+    else header.classList.remove('hidden');
+    lastY = y;
+  }, {passive:true});
+})();
+
+/* Генеративный «тканевый» фон hero (светлая гамма салона) */
+(function(){
+  var cv = document.getElementById('weave'); if (!cv) return;
+  var ctx = cv.getContext('2d');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var running = !reduced, visible = true, shift = 0, tile = null;
+  var PALETTE = ['#e6dcc8','#e2d6bd','#dccfb2','#d9cbab','#eae1cf','#e9dfd0','#ded2b8','#d4c5a3'];
+  function buildTile(w, h){
+    tile = document.createElement('canvas'); tile.width = w; tile.height = h;
+    var t = tile.getContext('2d');
+    t.clearRect(0,0,w,h);
+    var x = 0;
+    while (x < w){
+      var sw = 46 + Math.random()*92;
+      t.globalAlpha = .5;
+      t.fillStyle = PALETTE[Math.floor(Math.random()*PALETTE.length)];
+      t.fillRect(x, 0, sw, h);
+      t.globalAlpha = 1;
+      for (var y = 0; y < h; y += 3){
+        var l = Math.random();
+        t.fillStyle = l > .9 ? 'rgba(212,175,55,'+(0.04+Math.random()*0.08)+')'
+                   : l > .5 ? 'rgba(255,255,255,0.05)' : 'rgba(125,42,53,0.045)';
+        t.fillRect(x, y, sw, 1);
+      }
+      t.fillStyle = 'rgba(125,42,53,0.08)'; t.fillRect(x, 0, 1.5, h);
+      t.fillStyle = 'rgba(232,201,138,0.10)'; t.fillRect(x+sw-1.5, 0, 1.5, h);
+      x += sw;
+    }
+    for (var i = 0; i < Math.max(3, w/420); i++){
+      var gx = Math.random()*w;
+      t.fillStyle = 'rgba(212,175,55,0.16)'; t.fillRect(gx, 0, 3, h);
+      t.fillStyle = 'rgba(232,201,138,0.10)'; t.fillRect(gx+3, 0, 6, h);
+    }
+  }
+  var inited = false;
+  function resize(){
+    var dpr = Math.min(devicePixelRatio || 1, 2);
+    if (!cv.clientWidth || !cv.clientHeight) return;
+    inited = true;
+    cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
+    buildTile(cv.width + 260, cv.height);
+    draw();
+  }
+  function draw(){
+    if (!tile || !tile.width || !tile.height) return;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var off = -(shift % 260);
+    ctx.drawImage(tile, off - 260, 0);
+    ctx.drawImage(tile, off - 260 + tile.width, 0);
+    var g = ctx.createLinearGradient(0,0,cv.width,0);
+    var p = (Math.sin(shift*0.012)+1)/2;
+    g.addColorStop(Math.max(0,p-.25), 'rgba(212,175,55,0)');
+    g.addColorStop(p, 'rgba(212,175,55,0.06)');
+    g.addColorStop(Math.min(1,p+.25), 'rgba(212,175,55,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,cv.width,cv.height);
+  }
+  function loop(){ if (running && visible){ shift += 0.35; draw(); } requestAnimationFrame(loop); }
+  new IntersectionObserver(function(e){ visible = e[0].isIntersecting; if (visible && !inited) resize(); }).observe(cv);
+  window.addEventListener('resize', resize);
+  resize(); loop();
+})();
+
+/* Бегущая строка: дублируем для бесшовного цикла */
+(function(){ var m = document.getElementById('marquee'); if (m) m.innerHTML += m.innerHTML; })();
+
+/* Reveal при скролле + каскад задержек */
+(function(){
+  var els = document.querySelectorAll('.section-head, .svc, .price-card, .rev, .c-card, .gallery-grid .g, .split > img, .split > div, .hero-stats');
+  els.forEach(function(el){ el.classList.add('rv'); });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, {threshold:.12});
+  els.forEach(function(el){
+    var sibs = el.parentElement ? Array.prototype.filter.call(el.parentElement.children, function(c){ return c.classList.contains('rv'); }) : [el];
+    var i = sibs.indexOf(el);
+    el.style.transitionDelay = Math.min(i * 90, 540) + 'ms';
+    io.observe(el);
+  });
+})();
+
+/* Анимированные счётчики */
+(function(){
+  function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (!en.isIntersecting) return;
+      var el = en.target; io.unobserve(el);
+      var target = parseFloat(el.dataset.count), fixed = +(el.dataset.fixed || 0), suf = el.dataset.suffix || '';
+      var t0 = performance.now(), dur = 1500;
+      (function tick(t){
+        var p = Math.min((t - t0)/dur, 1);
+        var e = 1 - Math.pow(1 - p, 3);
+        var v = target * e;
+        el.textContent = (fixed ? v.toFixed(fixed).replace('.', ',') : fmt(Math.round(v))) + suf;
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+  }, {threshold:.5});
+  document.querySelectorAll('[data-count]').forEach(function(el){ io.observe(el); });
+})();
+
+
+</script>
+<script>
+/* Рейтинг Яндекс.Карт: подтягивается из /api/rating.json (единый файл, кэш 6 ч, при сбое остаются значения из вёрстки) */
+(function(){
+  function plural(n,f1,f2,f5){ n=Math.abs(n)%100; var d=n%10; if(n>10&&n<20) return f5; if(d>1&&d<5) return f2; if(d===1) return f1; return f5; }
+  function applyRt(r,c){
+    r=String(r||''); c=parseInt(c,10);
+    if(!r||!c||c<1) return;
+    var txt='★ '+r+' · '+c+' '+plural(c,'оценка','оценки','оценок')+' на Яндекс.Картах';
+    var pills=document.querySelectorAll('a.rating-pill');
+    for(var i=0;i<pills.length;i++) pills[i].textContent=txt;
+    var rv=document.querySelector('[data-rt="val"]');
+    if(rv){ rv.setAttribute('data-count', r.replace(',','.')); rv.textContent=r; }
+    var cn=document.querySelector('[data-rt="cnt"]');
+    if(cn){ cn.setAttribute('data-count', c); cn.textContent=String(c); }
+  }
+  var cached=null; try{ cached=JSON.parse(localStorage.getItem('klio_rating')||'null'); }catch(e){}
+  if(cached&&cached.r&&cached.c) applyRt(cached.r,cached.c);
+  if(cached&&cached.t&&(Date.now()-cached.t)<21600000) return;
+  var d=new Date();
+  var stamp=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  fetch('/api/rating.json?d='+stamp).then(function(res){ return res.ok?res.json():null; }).then(function(j){
+    if(j&&j.rating&&j.count){
+      var r=String(j.rating), c=parseInt(j.count,10);
+      applyRt(r,c);
+      try{ localStorage.setItem('klio_rating', JSON.stringify({r:r,c:c,t:Date.now()})); }catch(e){}
+    }
+  }).catch(function(){});
+})();
+</script>
+<script>
+/* Прайс и абонементы: подтягиваются из /api/content.json (редактируется в админке, кэш 6 ч, при сбое — вёрстка) */
+(function(){
+  function syncGrid(gridSel, cats){
+    if(!Array.isArray(cats)||!cats.length) return;
+    var grid=document.querySelector(gridSel); if(!grid) return;
+    var cards=grid.querySelectorAll('.price-card');
+    var tpl=cards.length?cards[0]:null; if(!tpl) return;
+    var d=new Date(), stamp=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    /* карточек стало больше, чем в вёрстке (добавили категорию в админке) — доклонируем */
+    while(grid.querySelectorAll('.price-card').length<cats.length){
+      var cl=tpl.cloneNode(true); grid.appendChild(cl);
+    }
+    cards=grid.querySelectorAll('.price-card');
+    for(var i=0;i<cards.length;i++){
+      var card=cards[i], cat=cats[i];
+      if(!cat){ card.style.display='none'; continue; } /* категорий стало меньше — лишние прячем */
+      card.style.display='';
+      var pbody=card.querySelector('.pbody'); if(!pbody) continue;
+      var h3=pbody.querySelector('h3');
+      if(h3&&cat.cat) h3.textContent=cat.cat;
+      /* фото карточки из админки (по индексу категории) */
+      var im=card.querySelector('.pimg img');
+      if(im&&cat.img){ im.src='img/'+cat.img+'?v='+stamp; }
+      var rows=pbody.querySelectorAll('.p-row');
+      for(var k=0;k<rows.length;k++) rows[k].parentNode.removeChild(rows[k]);
+      var anchor=h3?h3.nextSibling:pbody.firstChild;
+      (cat.rows||[]).forEach(function(r){
+        var div=document.createElement('div'); div.className='p-row';
+        var s=document.createElement('span'); s.textContent=r[0];
+        var b=document.createElement('b'); b.textContent=r[1];
+        if(r[2]==='strike'){ b.style.textDecoration='line-through'; b.style.color='var(--muted)'; }
+        div.appendChild(s); div.appendChild(b);
+        pbody.insertBefore(div, anchor);
+      });
+    }
+  }
+  /* ключ карточки: исходное имя файла картинки (запоминаем в data-k, чтобы работало после замены src) */
+  function svcKey(im){
+    if(!im) return '';
+    if(im.dataset.k) return im.dataset.k;
+    var m=(im.getAttribute('src')||'').split('?')[0].match(/([^\/]+\.(?:webp|jpe?g|png))$/i);
+    var k=m?m[1]:''; if(k) im.dataset.k=k;
+    return k;
+  }
+  /* порядок карточек на главной и в «Услугах»: по порядку cards[] в content.json (задаётся в админке) */
+  function orderCards(cards){
+    if(!Array.isArray(cards)||!cards.length) return;
+    var ord={}; cards.forEach(function(c,i){ if(c&&c.key&&ord[c.key]===undefined) ord[c.key]=i; });
+    document.querySelectorAll('.svc-grid').forEach(function(grid){
+      var items=[].slice.call(grid.querySelectorAll('.svc'));
+      items.sort(function(a,b){
+        var ka=svcKey(a.querySelector('img')), kb=svcKey(b.querySelector('img'));
+        var ia=ord[ka]!==undefined?ord[ka]:99, ib=ord[kb]!==undefined?ord[kb]:99;
+        return ia-ib;
+      });
+      items.forEach(function(it){ grid.appendChild(it); });
+    });
+  }
+  /* фото категорий: карточки на главной и в «Услугах» (сверяем по имени файла-ключа) */
+  function syncCards(cards){
+    if(!Array.isArray(cards)||!cards.length) return;
+    var map={};
+    cards.forEach(function(c){ if(c&&c.key&&c.img) map[c.key]=c.img; });
+    var d=new Date(), stamp=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    document.querySelectorAll('.svc-grid .svc img').forEach(function(im){
+      var k=svcKey(im);
+      if(k&&map[k]) im.src=map[k]+(map[k].indexOf('?')>-1?'&':'?')+'v='+stamp;
+    });
+  }
+  function applyContent(j){
+    if(!j) return;
+    syncGrid('#page-prices .price-grid', j.prices);
+    syncGrid('#page-certs .price-grid', j.certs);
+    orderCards(j.cards);
+    syncCards(j.cards);
+  }
+  var cached=null; try{ cached=JSON.parse(localStorage.getItem('klio_content')||'null'); }catch(e){}
+  if(cached&&cached.j) applyContent(cached.j);
+  if(cached&&cached.t&&(Date.now()-cached.t)<21600000) return;
+  var d=new Date();
+  var stamp=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  fetch('/api/content.json?d='+stamp).then(function(res){ return res.ok?res.json():null; }).then(function(j){
+    if(j&&(j.prices||j.certs||j.cards)){
+      applyContent(j);
+      try{ localStorage.setItem('klio_content', JSON.stringify({j:j,t:Date.now()})); }catch(e){}
+    }
+  }).catch(function(){});
+})();
+</script>
+<script>
+/* ===== П0: Метрика, цели, маска телефона, рабочие формы ===== */
+var YM_ID = 113672600;
+if (YM_ID) { (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym'); ym(YM_ID,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true,defer:true}); }
+function goal(n){ try{ if(YM_ID && window.ym) ym(YM_ID,'reachGoal',n); }catch(e){} }
+document.addEventListener('click', function(e){ var t = e.target && e.target.closest ? e.target.closest('[data-goal]') : null; if(t) goal(t.getAttribute('data-goal')); });
+window.addEventListener('hashchange', function(){ if(location.hash==='#page-zapis') goal('zapis_open'); });
+if(location.hash==='#page-zapis') goal('zapis_open');
+
+/* Маска телефона +7 (___) ___-__-__ */
+function gv(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
+function maskPhone(inp){
+  inp.addEventListener('input', function(){
+    var d = inp.value.replace(/\D/g,'');
+    if(d.charAt(0)==='8') d = '7'+d.slice(1);
+    if(d && d.charAt(0)!=='7') d = '7'+d;
+    d = d.slice(0,11);
+    var out = '';
+    if(d.length>0) out = '+7';
+    if(d.length>1) out += ' ('+d.slice(1,4);
+    if(d.length>=4) out += ') '+d.slice(4,7);
+    if(d.length>=7) out += '-'+d.slice(7,9);
+    if(d.length>=9) out += '-'+d.slice(9,11);
+    inp.value = out;
+  });
+}
+document.querySelectorAll('input[type="tel"]').forEach(maskPhone);
+
+/* Отправка заявки: POST /api/lead → «принято» только после подтверждения сервера; WhatsApp — добровольный резерв */
+var LEAD_ENDPOINT = '/api/lead';
+var WA_LEAD = 'https://wa.me/79295223439?text=';
+function leadMsg(type, f){
+  var lines = ['Заявка с сайта КЛИО · '+type];
+  for(var k in f){ if(k.charAt(0)!=='_' && f[k]) lines.push(k+': '+f[k]); }
+  return lines.join('\n');
+}
+/* UTM-метки: берём из адреса при первом заходе и запоминаем */
+function getUtm(){
+  try{
+    var p = new URLSearchParams(location.search), u = {}, has = false;
+    ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(k){ var v = p.get(k); if(v){ u[k]=v; has=true; } });
+    if(has){ try{ localStorage.setItem('klio_utm', JSON.stringify(u)); }catch(e){} return u; }
+    return JSON.parse(localStorage.getItem('klio_utm')||'{}') || {};
+  }catch(e){ return {}; }
+}
+function postLead(type, f){
+  var payload = JSON.stringify({type:type, fields:f, utm:getUtm(), page:location.hash||'#page-main', ts:Date.now()});
+  try{
+    var ctl = new AbortController(); var tm = setTimeout(function(){ ctl.abort(); }, 8000);
+    return fetch(LEAD_ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:payload, signal:ctl.signal})
+      .then(function(r){ clearTimeout(tm); return r.json().then(function(d){ return {ok: !!(r.ok && d && d.status==='accepted')}; }).catch(function(){ return {ok:false}; }); })
+      .catch(function(){ clearTimeout(tm); return {ok:false}; });
+  }catch(e){ return Promise.resolve({ok:false}); }
+}
+function wireLead(formId, type, getFields, pdId, okEl, goalName, onOk){
+  var form = document.getElementById(formId); if(!form) return;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = getFields();
+    if(f.__hp){ form.style.display='none'; if(okEl) okEl.style.display='block'; if(onOk) onOk(); return; } /* бот-ловушка: молча «проглатываем» */
+    if(!f['Имя'] || !f['Телефон'] || f['Телефон'].replace(/\D/g,'').length<11){ form.reportValidity(); return; }
+    if(pdId && !document.getElementById(pdId).checked){ alert('Подтвердите согласие на обработку персональных данных'); return; }
+    var btn = form.querySelector('button[type="submit"]'); var old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Отправка…';
+    var err = form.parentNode.querySelector('.lead-err');
+    if(!err){ err = document.createElement('div'); err.className = 'lead-err'; err.style.cssText = 'display:none;margin-top:12px;padding:14px 16px;border:1px solid #e3b7b7;border-radius:12px;background:#fdf4f4;font-size:14px;line-height:1.55;color:#5a3a3a;'; form.parentNode.appendChild(err); }
+    err.style.display = 'none';
+    postLead(type, f).then(function(res){
+      btn.disabled = false; btn.textContent = old;
+      if(res.ok){
+        goal(goalName); /* цель — только при подтверждённой сервером отправке */
+        form.style.display = 'none';
+        if(okEl) okEl.style.display = 'block';
+        if(onOk) onOk();
+      }else{
+        err.innerHTML = '<b>Заявка не отправлена.</b> Проверьте интернет и нажмите «Отправить» ещё раз — введённые данные сохранятся.<br>Или напишите нам в WhatsApp: <a href="'+WA_LEAD+encodeURIComponent(leadMsg(type, f))+'" target="_blank" rel="noopener" style="color:#7d2a35;text-decoration:underline;">открыть чат с готовым текстом →</a>';
+        err.style.display = 'block';
+      }
+    });
+  });
+}
+wireLead('zapisForm', 'Запись', function(){ return {'Имя':gv('zapisName'),'Телефон':gv('zapisPhone'),'Услуга':gv('zapisService'),'Желаемая дата':gv('zapisDateD'),'Желаемое время':gv('zapisDateT'),'__hp':gv('zapisHp')}; }, 'zapisPd', document.getElementById('zapisOk'), 'zapis_sent');
+wireLead('ctForm', 'Заявка со страницы контактов', function(){ return {'Имя':gv('ctName'),'Телефон':gv('ctPhone'),'Услуга':gv('ctService'),'Желаемая дата':gv('ctDateD'),'Желаемое время':gv('ctDateT'),'Комментарий':gv('ctComment'),'__hp':gv('ctHp')}; }, 'ctPd', document.getElementById('ctOk'), 'contact_sent');
+wireLead('certForm', 'Сертификат', function(){ return {'Имя':gv('certName'),'Телефон':gv('certPhone'),'Тип':gv('certType'),'Номинал':gv('certSum'),'Текст открытки':gv('certText'),'__hp':gv('certHp')}; }, 'certPd', document.getElementById('certOk'), 'cert_sent');
+wireLead('bkForm', 'Запись (окно)', function(){ return {'Имя':gv('bkName'),'Телефон':gv('bkPhone'),'Услуга':gv('bkService'),'Желаемая дата':gv('bkDateD'),'Желаемое время':gv('bkDateT'),'__hp':gv('bkHp')}; }, 'bkConsent', null, 'zapis_sent', function(){ document.getElementById('bookForm').style.display='none'; document.getElementById('bookOk').style.display='block'; });
+</script>
+
+<script>
+/* Фасад карты: iframe подгружается только по клику */
+(function(){
+  var f=document.getElementById('mapFacade'); if(!f) return;
+  function loadMap(){
+    var ifr=document.createElement('iframe');
+    ifr.src='https://yandex.ru/map-widget/v1/?ll=37.75059%2C55.82544&z=16&pt=37.75059,55.82544,pm2rdl';
+    ifr.setAttribute('width','100%'); ifr.setAttribute('height','280'); ifr.setAttribute('frameborder','0');
+    ifr.style.display='block'; ifr.style.borderRadius='12px';
+    f.replaceWith(ifr);
+  }
+  f.addEventListener('click', loadMap);
+  f.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); loadMap(); } });
+})();
+</script>
+</body>
+</html>

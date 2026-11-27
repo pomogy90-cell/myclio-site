@@ -54,7 +54,7 @@ function fcm_push_text($ev){
         'complete'=>'Запись завершена', 'delete'=>'Запись удалена', 'lead_delete'=>'Заявка удалена', 'lead_done'=>'Заявка обработана'];
     $title = $T[$ev['type'] ?? ''] ?? ($ev['title'] ?? 'КЛИО');
     $body = trim((string)($ev['info'] ?? ''));
-    if (!empty($ev['user']) && $ev['user'] !== 'Сайт') $body .= ($body !== '' ? "\n" : '') . 'Кто: ' . $ev['user'];
+    if (!empty($ev['user']) && $ev['user'] !== 'Сайт' && $ev['user'] !== 'DIKIDI') $body .= ($body !== '' ? "\n" : '') . 'Кто: ' . $ev['user'];
     return [$title, $body];
 }
 

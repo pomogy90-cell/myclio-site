@@ -739,8 +739,10 @@ function evHtml(it, narrow, posStyle, showSpec){
   var sub = showSpec ? (it.spec ? ' · ' + esc(it.spec) : '') : (it.phone ? ' · ' + esc(it.phone) : '');
   var sv = svcLine(it);
   if ((narrow || cmp) && it.services && it.services.length > 1) sv = it.services[0] + ' +' + (it.services.length - 1);
+  var dkb = (it.src === 'dikidi') ? '<span class="dkb" title="Импортировано из DIKIDI">D</span>' : '';
+  var wrn = (it.needinfo && it.needinfo.length) ? '<span class="dkb dk-w" title="Требуется уточнение данных">!</span>' : '';
   return '<div class="mng-ev st-' + st + tint + (cmp ? ' diminfo' : '') + '" data-bid="' + it.id + '" style="' + pos + 'top:' + ((t2m(it.start) - WORK_START*60)/60*hh()) + 'px;height:' + Math.max(24, (t2m(it.end)-t2m(it.start))/60*hh() - 3) + 'px">' +
-    ico + '<span class="t">' + esc(it.start) + '–' + esc(it.end) + '</span> <b>' + esc(sv) + '</b>' +
+    ico + '<span class="t">' + esc(it.start) + '–' + esc(it.end) + '</span>' + dkb + wrn + ' <b>' + esc(sv) + '</b>' +
     (narrow || cmp ? '' : '<small>' + esc(it.client) + sub + '</small>') +
     '</div>';
 }
@@ -1030,9 +1032,11 @@ function renderListHtml(){
       h += '<div class="mng-lst-g"><b>' + esc(dayLabel(it.date)) + '</b><span>' + n + ' зап.</span><i></i></div>';
     }
     var off = (it.status === 'canceled' || it.status === 'noshow');
+    var dkb = (it.src === 'dikidi') ? ' <span class="dkb" title="Импортировано из DIKIDI">D</span>' : '';
+    var wrn = (it.needinfo && it.needinfo.length) ? ' <span class="dkb dk-w" title="Требуется уточнение данных">!</span>' : '';
     h += '<div class="mng-lr' + (off ? ' off' : '') + '" data-bid="' + it.id + '">' +
       '<div class="lt">' + esc(it.start) + '<br><span style="color:var(--mut);font-weight:700">' + esc(it.end) + '</span></div>' +
-      '<div class="li"><div class="ln">' + esc(it.client || 'Клиент') + '</div>' +
+      '<div class="li"><div class="ln">' + esc(it.client || 'Клиент') + dkb + wrn + '</div>' +
       '<div class="ls">' + esc(svcLine(it)) + '</div></div>' +
       '<div class="lsp"><span class="dot" style="background:' + specColor(it.spec) + '"></span>' + esc(it.spec) + '</div>' +
       '<span class="mng-st stt-' + it.status + '">' + ST_SHORT[it.status] + '</span></div>';
@@ -1201,6 +1205,17 @@ function openCard(bid, soft, prefill){
 
   var rest = (it.amount != null ? it.amount : 0) - (it.reward != null ? it.reward : 0);
 
+  /* ТЗ №4: баннер источника и предупреждение о неполных данных для записей из DIKIDI */
+  var NEED_RU = {client:'имя клиента', phone:'телефон', spec:'специалист'};
+  var dkBanner = '';
+  if (!isNew && it.src === 'dikidi') {
+    dkBanner = '<div class="dk-src">Импортировано из <b>DIKIDI</b> · синхронизация через Google Calendar</div>';
+    if (it.needinfo && it.needinfo.length) {
+      var nl = it.needinfo.map(function(k){ return NEED_RU[k] || k; }).join(', ');
+      dkBanner += '<div class="dk-warn">⚠ Требуется уточнение: <b>' + esc(nl) + '</b> — заполните вручную ниже.</div>';
+    }
+  }
+
   ovl.innerHTML =
   '<div class="mng-card" id="mngCardModal" data-bid="' + esc(it.id) + '">' +
     '<div class="mng-grip" id="mcGrip"></div>' +
@@ -1210,6 +1225,7 @@ function openCard(bid, soft, prefill){
     (isNew ? '' : '<div class="who">Специалист: ' + esc(it.spec) + '<br>Клиент: ' + esc(it.client || '—') +
       (it.phone ? ' · <a href="tel:' + esc(it.phone) + '" style="color:inherit;font-weight:700">' + esc(it.phone) + '</a>' : '') + '</div>') +
 
+    dkBanner +
     (isNew ? '' : '<hr class="mng-hr">') +
     '<div id="mcEdit" style="display:' + (isNew?'block':'none') + '">' +
       '<div class="mng-frm2">' +
@@ -1976,7 +1992,10 @@ var EV_META = {
   lead_delete:   {i:'🗑️', c:'red',    ru:'Удаление заявки'},
   lead_done:     {i:'📨', c:'blue',   ru:'Заявка обработана'},
   cash_opening:  {i:'🏦', c:'green',  ru:'Касса: начальный остаток'},
-  cash_payout:   {i:'💸', c:'orange', ru:'Касса: изъятие наличных'}
+  cash_payout:   {i:'💸', c:'orange', ru:'Касса: изъятие наличных'},
+  update:        {i:'🔄', c:'blue',   ru:'Обновление из DIKIDI'},
+  gcal_conflict: {i:'⚡', c:'red',    ru:'Конфликт расписания (DIKIDI)'},
+  gcal_notice:   {i:'📌', c:'amber',  ru:'Требует проверки (DIKIDI)'}
 };
 var EV_C_HEX = {green:'#6d9350', blue:'#7d8ca8', orange:'#c27a3a', red:'#b3543f', gray:'#8a8578', amber:'#c1912f'};
 var SRC_RU = {panel:'Админ-панель', app:'Приложение', web:'Браузер', site:'Сайт', dikidi:'DIKIDI'};
@@ -1994,6 +2013,7 @@ function evDay(t){
 var HIST_NM = {date:'Дата посещения', start:'Время начала', end:'Время окончания', client:'Клиент', phone:'Телефон',
   dir:'Направление', service:'Услуга', spec:'Специалист', comment:'Комментарий', done:'Услуга оказана',
   amount:'Получено, ₽', pay:'Способ оплаты', reward:'Вознаграждение, ₽', state:'Статус',
+  src:'Источник', needinfo:'Требует уточнения', price_src:'Источник цены',
   name:'Клиент', type:'Тип заявки', wdate:'Желаемая дата', wtime:'Желаемое время'};
 function histVal(k, v){
   if (v !== null && typeof v === 'object') return null;

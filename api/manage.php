@@ -78,7 +78,7 @@ function book_info($it){
 /* снимок записи для журнала (все поля, включая финансы) */
 function book_snap($it){
     $s = [];
-    foreach (['date','start','end','client','phone','dir','service','services','spec','comment','done','amount','pay','reward','state'] as $k)
+    foreach (['date','start','end','client','phone','dir','service','services','spec','comment','done','amount','pay','reward','state','src','needinfo','price_src'] as $k)
         $s[$k] = $it[$k] ?? null;
     return $s;
 }

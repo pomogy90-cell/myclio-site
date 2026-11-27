@@ -265,6 +265,116 @@ if (is_auth() && !$need_setup && $action !== '') {
         header('Location: ' . safe_back($_POST['back'] ?? '')); exit;
     }
 
+    /* ================= ИНТЕГРАЦИЯ DIKIDI → Google Calendar → CRM (ТЗ №4) ================= */
+    if (strpos($action, 'gcal_') === 0) {
+        require_once $API_DIR . '/gcal-lib.php';
+        $cfg = gcal_cfg();
+
+        if ($action === 'gcal_save_keys') {
+            $cid = trim((string)($_POST['client_id'] ?? ''));
+            $csec = trim((string)($_POST['client_secret'] ?? ''));
+            if ($cid === '' || $csec === '') { flash('Укажите Client ID и Client Secret из Google Cloud Console.', false); header('Location: index.php?p=gcal'); exit; }
+            $cfg['client_id'] = mb_substr($cid, 0, 200);
+            $cfg['client_secret_enc'] = gcal_enc($csec);
+            gcal_cfg($cfg);
+            flash('Ключи сохранены. Теперь подключите Google-аккаунт.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_oauth_start') {
+            if (($cfg['client_id'] ?? '') === '' || ($cfg['client_secret_enc'] ?? '') === '') {
+                flash('Сначала сохраните Client ID и Client Secret.', false);
+                header('Location: index.php?p=gcal'); exit;
+            }
+            $cfg['oauth_state'] = bin2hex(random_bytes(16));
+            gcal_cfg($cfg);
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $redirect = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'myclio.ru') . '/api/gcal-oauth.php';
+            $url = rtrim((string)$cfg['auth_url'], '?') . '?' . http_build_query([
+                'client_id'     => $cfg['client_id'],
+                'redirect_uri'  => $redirect,
+                'response_type' => 'code',
+                'scope'         => 'https://www.googleapis.com/auth/calendar.readonly', /* ТЗ §8: минимальные права — только чтение */
+                'access_type'   => 'offline',
+                'prompt'        => 'consent',
+                'state'         => $cfg['oauth_state'],
+            ]);
+            header('Location: ' . $url); exit;
+        }
+
+        if ($action === 'gcal_disconnect') {
+            $cfg['refresh_token_enc'] = '';
+            $cfg['access'] = ['token'=>'', 'exp'=>0];
+            $cfg['oauth_state'] = '';
+            $cfg['sync_enabled'] = false;
+            gcal_cfg($cfg);
+            flash('Google-аккаунт отключён, синхронизация остановлена. Сопоставления календарей сохранены.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_refresh_cals') {
+            $res = gcal_list_calendars($cfg);
+            $cfg = $res[1];
+            $list = $res[0];
+            if ($list === null) { gcal_cfg($cfg); flash('Не удалось получить список календарей — проверьте подключение аккаунта.', false); header('Location: index.php?p=gcal'); exit; }
+            $added = 0;
+            foreach ($list as $c) {
+                $id = (string)$c['id'];
+                if (!isset($cfg['calendars'][$id])) {
+                    $cfg['calendars'][$id] = ['name'=>(string)$c['name'], 'spec'=>'', 'enabled'=>false, 'syncToken'=>'', 'first_done'=>false];
+                    $added++;
+                } else {
+                    $cfg['calendars'][$id]['name'] = (string)$c['name'];
+                }
+            }
+            gcal_cfg($cfg);
+            flash($added ? "Найдены новые календари: $added. Сопоставьте их специалистам и включите нужные." : 'Список календарей актуален, новых нет.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_save_cals') {
+            $specs = $_POST['cal_spec'] ?? [];
+            $enab  = $_POST['cal_en'] ?? [];
+            $meta  = jread($DATA_DIR . '/manage-meta.json', []);
+            $valid = array_map('strval', (array)($meta['specialists'] ?? []));
+            foreach ((array)$cfg['calendars'] as $id => $cal) {
+                $sp = (string)($specs[$id] ?? '');
+                $cfg['calendars'][$id]['spec'] = in_array($sp, $valid, true) ? $sp : '';
+                $cfg['calendars'][$id]['enabled'] = !empty($enab[$id]);
+            }
+            gcal_cfg($cfg);
+            flash('Сопоставления календарей сохранены.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_toggle') {
+            $cfg['sync_enabled'] = !empty($_POST['on']);
+            gcal_cfg($cfg);
+            flash($cfg['sync_enabled'] ? 'Синхронизация включена. Проверьте, что настроен запуск раз в минуту (ниже на странице).' : 'Синхронизация выключена.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_now') {
+            $st = gcal_sync_run(true);
+            if ($st['ok']) {
+                flash('Синхронизация выполнена: событий ' . $st['events'] . ', новых ' . $st['created'] .
+                      ', обновлено ' . $st['updated'] . ', отменено ' . $st['canceled'] .
+                      ($st['conflicts'] ? ', конфликтов ' . $st['conflicts'] : '') .
+                      ($st['notices'] ? ', требуют проверки ' . $st['notices'] : '') . '.');
+            } else {
+                flash('Синхронизация не выполнена: ' . implode('; ', $st['errors']), false);
+            }
+            header('Location: index.php?p=gcal'); exit;
+        }
+
+        if ($action === 'gcal_clear_errors') {
+            $cfg['errors'] = [];
+            gcal_cfg($cfg);
+            flash('Журнал ошибок очищен.');
+            header('Location: index.php?p=gcal'); exit;
+        }
+    }
+
     if ($action === 'save_rating') {
         $rating = trim((string)($_POST['rating'] ?? ''));
         $count  = (int)($_POST['count'] ?? 0);
@@ -546,8 +656,8 @@ function login_view($need_setup, $f){
 if ($need_setup) login_view(true, $flash);
 if (!is_auth()) login_view(false, $flash);
 
-$nav = ['dashboard'=>'Главная','salon'=>'Салон','leads'=>'Заявки','content'=>'Рейтинг и цены','cards'=>'Фото категорий','password'=>'Пароль'];
-$navIc = ['dashboard'=>'⌂','salon'=>'📅','leads'=>'🔔','content'=>'★','cards'=>'🖼','password'=>'🔑'];
+$nav = ['dashboard'=>'Главная','salon'=>'Салон','leads'=>'Заявки','content'=>'Рейтинг и цены','cards'=>'Фото категорий','gcal'=>'DIKIDI','password'=>'Пароль'];
+$navIc = ['dashboard'=>'⌂','salon'=>'📅','leads'=>'🔔','content'=>'★','cards'=>'🖼','gcal'=>'🔗','password'=>'🔑'];
 if (!isset($nav[$page])) $page = 'dashboard';
 head_html($nav[$page]);
 echo '<div class="wrap"><aside class="side">',
@@ -826,8 +936,121 @@ if ($page === 'salon') {
     echo '<style>.main{max-width:100%}</style>',
          '<h1>Управление салоном<small>Календарь записей, расчёты, баланс — всё синхронизировано с приложением команды</small></h1>',
          '<div id="klioManage" data-token="' . e($tok) . '"></div>',
-         '<link rel="stylesheet" href="/manage/manage.css?v=10">',
-         '<script src="/manage/manage.js?v=10"></script>';
+         '<link rel="stylesheet" href="/manage/manage.css?v=11">',
+         '<script src="/manage/manage.js?v=11"></script>';
+}
+
+/* ================= ИНТЕГРАЦИЯ DIKIDI → Google Calendar → CRM (ТЗ №4, §8) ================= */
+if ($page === 'gcal') {
+    require_once $API_DIR . '/gcal-lib.php';
+    $cfg = gcal_cfg();
+    if ((string)($cfg['sync_token'] ?? '') === '') { $cfg['sync_token'] = bin2hex(random_bytes(24)); gcal_cfg($cfg); }
+    $connected = ((string)($cfg['refresh_token_enc'] ?? '') !== '');
+    $meta = jread($DATA_DIR . '/manage-meta.json', []);
+    $specList = array_map('strval', (array)($meta['specialists'] ?? []));
+    $scheme = 'https';
+    $redirect = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'myclio.ru') . '/api/gcal-oauth.php';
+    $cronUrl  = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'myclio.ru') . '/api/gcal-sync.php?token=' . $cfg['sync_token'];
+    $okFlash = (isset($_GET['ok']) && $_GET['ok'] === '1');
+    $errFlash = (string)($_GET['err'] ?? '');
+
+    echo '<style>
+      .gk-step{background:#fffdf8;border:1px solid var(--line2,#e5ddcd);border-radius:14px;padding:18px 20px;margin:14px 0}
+      .gk-step h3{margin:0 0 10px;font-size:15px}
+      .gk-code{display:block;background:#f5efe2;border-radius:10px;padding:10px 14px;font:13px/1.5 ui-monospace,monospace;
+               word-break:break-all;margin:8px 0;user-select:all}
+      .gk-status{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700}
+      .gk-on{background:#e9f2dc;color:#4e7a2a}.gk-off{background:#fbe3d7;color:#a4442f}
+      .gk-table{width:100%;border-collapse:collapse;font-size:14px}
+      .gk-table td,.gk-table th{padding:8px 6px;border-bottom:1px solid #eee4d2;text-align:left;vertical-align:middle}
+      .gk-err{max-height:220px;overflow:auto;background:#fdf6f3;border:1px solid #f0d5cb;border-radius:10px;padding:10px 14px;font-size:12.5px}
+      .gk-err div{padding:3px 0;border-bottom:1px dashed #f0d5cb}
+    </style>',
+    '<h1>Интеграция DIKIDI<small>Автоматический перенос записей: DIKIDI → Google Календарь → наша CRM. Только в одну сторону, данные из CRM в DIKIDI не уходят.</small></h1>';
+
+    if ($okFlash) echo '<div class="flash ok">Google-аккаунт подключён. Обновите список календарей ниже.</div>';
+    if ($errFlash !== '') echo '<div class="flash err">' . e($errFlash) . '</div>';
+
+    /* статус */
+    echo '<div class="gk-step"><h3>Статус</h3>';
+    echo '<span class="gk-status ' . ($connected ? 'gk-on' : 'gk-off') . '">' . ($connected ? 'Аккаунт подключён' : 'Аккаунт не подключён') . '</span> ';
+    echo '<span class="gk-status ' . (!empty($cfg['sync_enabled']) ? 'gk-on' : 'gk-off') . '">Синхронизация ' . (!empty($cfg['sync_enabled']) ? 'включена' : 'выключена') . '</span>',
+         '<div style="margin-top:10px;font-size:13px;color:var(--mut,#8a8578)">',
+         'Последний запуск: ' . (!empty($cfg['last_sync']) ? date('d.m.Y H:i:s', (int)$cfg['last_sync']) : 'ещё не было'),
+         ' · последний успешный: ' . (!empty($cfg['last_ok']) ? date('d.m.Y H:i:s', (int)$cfg['last_ok']) : '—'),
+         '</div></div>';
+
+    /* шаг 1: ключи */
+    echo '<div class="gk-step"><h3>Шаг 1. Ключи Google Cloud (OAuth 2.0)</h3>',
+         '<div style="font-size:13px;margin-bottom:10px">Создайте OAuth-клиент в Google Cloud Console (инструкция прилагается). ',
+         'При создании укажите разрешённый URI перенаправления:</div>',
+         '<span class="gk-code">' . e($redirect) . '</span>',
+         '<form method="post">'; csrf_field();
+    echo '<input type="hidden" name="action" value="gcal_save_keys">',
+         '<label>Client ID</label><input name="client_id" value="' . e((string)$cfg['client_id']) . '" autocomplete="off" style="max-width:520px">',
+         '<label>Client Secret' . ($cfg['client_secret_enc'] ? ' (сохранён — введите, только если меняется)' : '') . '</label>',
+         '<input name="client_secret" type="password" value="" autocomplete="off" style="max-width:520px">',
+         '<div><button class="btn" style="margin-top:14px">Сохранить ключи</button></div></form></div>';
+
+    /* шаг 2: подключение */
+    echo '<div class="gk-step"><h3>Шаг 2. Подключение Google-аккаунта</h3>',
+         '<div style="font-size:13px;margin-bottom:10px">Подключите аккаунт, к календарям которого привязан экспорт DIKIDI. ',
+         'Запрашивается доступ <b>только на чтение календарей</b> (минимальные права, ТЗ §8).</div>';
+    if ($connected) {
+        echo '<form method="post" onsubmit="return confirm(\'Отключить аккаунт? Синхронизация остановится.\')">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_disconnect"><button class="btn" style="background:#b3543f">Отключить аккаунт</button></form>';
+    } else {
+        echo '<form method="post">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_oauth_start"><button class="btn">Подключить Google-аккаунт</button></form>';
+    }
+    echo '</div>';
+
+    /* шаг 3: календари */
+    if ($connected) {
+        echo '<div class="gk-step"><h3>Шаг 3. Календари и специалисты</h3>',
+             '<div style="font-size:13px;margin-bottom:10px">В DIKIDI включён экспорт в Google Календарь — каждый сотрудник виден отдельным календарём. ',
+             'Сопоставьте каждому календарю специалиста из CRM и включите нужные.</div>',
+             '<form method="post" style="margin-bottom:12px">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_refresh_cals"><button class="btn">Обновить список календарей</button></form>';
+        if (!empty($cfg['calendars'])) {
+            echo '<form method="post">'; csrf_field();
+            echo '<input type="hidden" name="action" value="gcal_save_cals"><table class="gk-table"><tr><th></th><th>Календарь Google</th><th>Специалист в CRM</th><th>Последняя синхр.</th></tr>';
+            foreach ($cfg['calendars'] as $id => $cal) {
+                echo '<tr><td><input type="checkbox" name="cal_en[' . e($id) . ']" value="1"' . (!empty($cal['enabled']) ? ' checked' : '') . '></td>',
+                     '<td>' . e((string)($cal['name'] ?? $id)) . '<div style="font-size:11px;color:var(--mut,#8a8578)">' . e($id) . '</div></td>',
+                     '<td><select name="cal_spec[' . e($id) . ']"><option value="">— не сопоставлен —</option>';
+                foreach ($specList as $sp) echo '<option value="' . e($sp) . '"' . (($cal['spec'] ?? '') === $sp ? ' selected' : '') . '>' . e($sp) . '</option>';
+                echo '</select></td>',
+                     '<td style="font-size:12px;color:var(--mut,#8a8578)">' . (!empty($cal['last_sync']) ? date('d.m H:i', (int)$cal['last_sync']) : '—') . '</td></tr>';
+            }
+            echo '</table><button class="btn" style="margin-top:12px">Сохранить сопоставления</button></form>';
+        } else {
+            echo '<div style="font-size:13px;color:var(--mut,#8a8578)">Список пуст — нажмите «Обновить список календарей».</div>';
+        }
+        echo '</div>';
+    }
+
+    /* шаг 4: запуск */
+    if ($connected) {
+        echo '<div class="gk-step"><h3>Шаг 4. Запуск синхронизации</h3>',
+             '<div style="font-size:13px;margin-bottom:10px">Сервер опрашивает календари раз в 60 секунд (ТЗ §5) — независимо от того, открыто ли приложение. ',
+             'Для этого на хостинге настраивается задание cron на URL:</div>',
+             '<span class="gk-code">' . e($cronUrl) . '</span>',
+             '<form method="post" style="display:inline">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_toggle"><input type="hidden" name="on" value="' . (!empty($cfg['sync_enabled']) ? '0' : '1') . '">',
+             '<button class="btn">' . (!empty($cfg['sync_enabled']) ? 'Выключить' : 'Включить') . ' синхронизацию</button></form> ',
+             '<form method="post" style="display:inline">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_now"><button class="btn">Синхронизировать сейчас</button></form></div>';
+    }
+
+    /* ошибки */
+    if (!empty($cfg['errors'])) {
+        echo '<div class="gk-step"><h3>Журнал ошибок интеграции</h3><div class="gk-err">';
+        foreach (array_reverse((array)$cfg['errors']) as $er)
+            echo '<div><b>' . e(date('d.m H:i', (int)($er['t'] ?? 0))) . '</b> — ' . e((string)($er['m'] ?? '')) . '</div>';
+        echo '</div><form method="post" style="margin-top:10px">'; csrf_field();
+        echo '<input type="hidden" name="action" value="gcal_clear_errors"><button class="btn">Очистить журнал</button></form></div>';
+    }
 }
 
 /* ================= ПАРОЛЬ ================= */

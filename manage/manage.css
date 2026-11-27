@@ -482,3 +482,12 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
 .mc-after{margin-top:10px;background:#faf5e9;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13.5px;color:var(--mut);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .mc-after b{font-family:Marcellus,serif;font-size:18px;color:var(--wine);white-space:nowrap}
 @media (max-width:860px){.mc-kpis{grid-template-columns:1fr 1fr}.mc-kpi b{font-size:18px}}
+
+/* === ТЗ №4: интеграция DIKIDI → Google Calendar → CRM === */
+.dkb{display:inline-block;vertical-align:1px;font-size:9.5px;font-weight:900;line-height:1;
+  padding:2.5px 4.5px;border-radius:5px;background:#e8ddf3;color:#5d3f86;letter-spacing:.03em;margin:0 1px}
+.dkb.dk-w{background:#fbe3d7;color:#a4442f;font-size:10.5px;padding:2px 5px}
+.dk-src{margin:10px 0 2px;background:#f1eaf8;border:1px solid #d9c8ee;border-radius:12px;
+  padding:8px 12px;font-size:12.5px;color:#5d3f86}
+.dk-warn{margin:8px 0 2px;background:#fdf0e7;border:1px solid #efc9a8;border-radius:12px;
+  padding:8px 12px;font-size:12.5px;color:#8f4a1f}

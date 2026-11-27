@@ -1448,8 +1448,8 @@ function openCard(bid, soft, prefill){
       S.items[j.item.id] = j.item;
       S.dirty = false;
       refreshViews(); updateBadges();
-      if (extra && extra.state) { ovl.remove(); toast('Готово'); }
-      else openCard(j.item.id, true);
+      ovl.remove(); /* 28.11-В16: после «Сохранить» карточка закрывается */
+      toast(extra && extra.state ? 'Готово' : 'Сохранено');
     }).catch(function(e){
       $('mcSave').disabled = false;
       toast(e.msg || 'Не сохранилось');
@@ -1543,6 +1543,9 @@ function cashHtml(r){
       '<div class="mc-ico">' + CASH_SVG + '</div>' +
       '<div class="mc-cap">Текущий остаток наличных</div>' +
       '<div class="mc-sum" id="mcCashSum">' + rub(c.balance) + '</div>' +
+      ((c.rewards || 0) > 0
+        ? '<div class="mc-note">Наличные по записям: ' + rub(c.in_full || 0) + ' · из них мастерам: −' + rub(c.rewards) + '</div>'
+        : '') +
       (c.opening_set
         ? '<button class="mng-btn gold" id="cashOut" style="margin-top:6px;padding:11px 22px"' + (c.balance > 0 ? '' : ' disabled') + '>Изъятие кассы</button>'
         : '<div class="mc-first">' +
@@ -1553,7 +1556,7 @@ function cashHtml(r){
               '<button class="mng-btn gold" id="cashOpenBtn" style="flex:1">Задать остаток</button>' +
             '</div>' +
           '</div>') +
-      '<div class="mc-hint">Наличные поступают в кассу при оплате записей способом «Наличные». Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
+      '<div class="mc-hint">В кассу поступает оплата наличными за вычетом вознаграждения мастера — мастер получает свою часть сразу из наличных. Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
     '</div>';
 
   var rowsHtml = shown.length ? shown.map(function(p){

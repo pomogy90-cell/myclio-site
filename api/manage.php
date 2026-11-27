@@ -120,7 +120,7 @@ function cash_load(){
     return $c;
 }
 function cash_receipts($b, $from){
-    $in = 0;
+    $in = 0; $rw = 0;
     foreach (($b['items'] ?? []) as $it) {
         if (!empty($it['deleted'])) continue;
         if (!empty($it['state'])) continue;            /* отмена/неявка — деньги не в кассе */
@@ -129,19 +129,22 @@ function cash_receipts($b, $from){
         $ct = (int)($it['cash_at'] ?? 0);
         if (!$ct || $ct < $from) continue;             /* оплата внесена до старта учёта */
         $in += $a;
+        /* 28.11-В16: вознаграждение мастеру из наличных выдаётся сразу и в кассу не попадает */
+        $rw += min($a, max(0, (int)($it['reward'] ?? 0)));
     }
-    return $in;
+    return [$in, $rw];
 }
 function cash_public($cash, $b){
     $set = !empty($cash['opening_set']);
-    $in = $set ? cash_receipts($b, (int)($cash['opening_at'] ?? 0)) : 0;
+    $in = 0; $rw = 0;
+    if ($set) { [$in, $rw] = cash_receipts($b, (int)($cash['opening_at'] ?? 0)); }
     $out = 0;
     foreach ($cash['payouts'] as $p) $out += (int)($p['amount'] ?? 0);
     $opening = $set ? (int)($cash['opening'] ?? 0) : 0;
     $ps = array_values($cash['payouts']);
     if (count($ps) > 500) $ps = array_slice($ps, -500);
-    return ['opening_set'=>$set, 'opening'=>$opening, 'in'=>$in, 'out'=>$out,
-            'balance'=>$opening + $in - $out, 'payouts'=>$ps];
+    return ['opening_set'=>$set, 'opening'=>$opening, 'in'=>$in - $rw, 'in_full'=>$in, 'rewards'=>$rw, 'out'=>$out,
+            'balance'=>$opening + $in - $rw - $out, 'payouts'=>$ps];
 }
 
 /* ----- токены ----- */

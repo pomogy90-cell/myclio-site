@@ -491,3 +491,12 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
   padding:8px 12px;font-size:12.5px;color:#5d3f86}
 .dk-warn{margin:8px 0 2px;background:#fdf0e7;border:1px solid #efc9a8;border-radius:12px;
   padding:8px 12px;font-size:12.5px;color:#8f4a1f}
+
+/* 28.11-В16: на десктопе сетка дня обязана влезать в ширину окна без горизонтального скролла;
+   колонки сжимаются (минимум убран), вертикальный скролл сохраняется */
+@media(min-width:721px){
+  .mng-grid{width:100%}
+  .mng-gcol{min-width:0}
+  .mng-gridwrap{overflow-x:hidden}
+}
+.mc-note{margin-top:5px;font-size:12px;color:var(--mut);font-weight:600}

@@ -510,13 +510,17 @@ function applyContent(j){
 function syncContent(){
   let cached=null; try{ cached=JSON.parse(localStorage.getItem('klio_content')||'null'); }catch(e){}
   if(cached&&cached.j) applyContent(cached.j);
-  if(cached&&cached.t&&(Date.now()-cached.t)<21600000) return;
+  /* всегда фоново сверяемся с сервером (раньше до 6 ч показывался старый кэш —
+     заменённые в админке фото «откатывались» до истечения кэша) */
   const d=new Date();
   const stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-  fetch(CONTENT_URL+'?d='+stamp).then(res=>res.ok?res.json():null).then(j=>{
+  fetch(CONTENT_URL+'?d='+stamp,{cache:'no-cache'}).then(res=>res.ok?res.json():null).then(j=>{
     if(j&&(j.prices||j.certs||j.cards)){
-      applyContent(j);
-      try{ localStorage.setItem('klio_content', JSON.stringify({j,t:Date.now()})); }catch(e){}
+      const changed=!cached||!cached.j||JSON.stringify(cached.j)!==JSON.stringify(j);
+      if(changed){
+        applyContent(j);
+        try{ localStorage.setItem('klio_content', JSON.stringify({j,t:Date.now()})); }catch(e){}
+      }
     }
   }).catch(()=>{});
 }

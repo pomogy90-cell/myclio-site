@@ -1,6 +1,7 @@
-/* КЛИО · Service Worker · v3 (26.11.2026)
-   Кэшируем только статику приложения; API и HTML — всегда из сети */
-var CACHE = 'klio-v3';
+/* КЛИО · Service Worker · v4 (27.11.2026)
+   API и HTML — всегда из сети; изображения — сначала сеть (фото из админки
+   обновляются сразу), офлайн — кэш; прочая статика — cache-first. */
+var CACHE = 'klio-v4';
 var STATIC = [
   './', 'index.html', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
@@ -35,7 +36,19 @@ self.addEventListener('fetch', function(e){
     );
     return;
   }
-  /* статика: сначала кэш, при промахе — сеть */
+  /* изображения: сначала сеть (замена фото в админке видна сразу), офлайн — кэш */
+  if (/\.(webp|jpe?g|png|svg|ico|gif)$/i.test(url.pathname)) {
+    e.respondWith(
+      fetch(e.request).then(function(r){
+        if (r.ok && url.origin === location.origin) {
+          var copy = r.clone(); caches.open(CACHE).then(function(c){ c.put(e.request, copy); });
+        }
+        return r;
+      }).catch(function(){ return caches.match(e.request); })
+    );
+    return;
+  }
+  /* остальная статика: сначала кэш, при промахе — сеть */
   e.respondWith(
     caches.match(e.request).then(function(m){
       return m || fetch(e.request).then(function(r){

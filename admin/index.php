@@ -108,6 +108,10 @@ $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 session_name('KLIOADM');
 session_set_cookie_params(['lifetime'=>0,'path'=>'/admin/','httponly'=>true,'samesite'=>'Strict','secure'=>$secure]);
 session_start();
+/* страницы админки не кэшируем: после замены фото «Назад» в браузере не должно
+   показывать устаревшую копию страницы со старыми изображениями */
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Pragma: no-cache');
 
 /* ---------- помощники ---------- */
 function e($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
@@ -267,7 +271,7 @@ if (is_auth() && !$need_setup && $action !== '') {
         if (preg_match('/^\d[,.]\d$/', $rating) && $count >= 0 && $count < 1000000) {
             $rating = str_replace('.', ',', $rating);
             jwrite($F_RATING, ['rating'=>$rating, 'count'=>$count, 'updated'=>date('Y-m-d')]);
-            flash("Рейтинг сохранён: $rating · $count. На сайте и в приложении обновится в течение суток.");
+            flash("Рейтинг сохранён: $rating · $count. На сайте и в приложении появится при следующем открытии страницы.");
         } else flash('Проверьте формат: оценка вида «5,0», число оценок — целое.', false);
         header('Location: index.php?p=content'); exit;
     }
@@ -309,7 +313,7 @@ if (is_auth() && !$need_setup && $action !== '') {
         }
         $content['updated'] = date('Y-m-d');
         jwrite($F_CONTENT, $content);
-        flash('Цены сохранены. На сайте и в приложении обновятся в течение суток.');
+        flash('Цены сохранены. На сайте и в приложении появятся при следующем открытии страницы.');
         header('Location: index.php?p=content'); exit;
     }
 
@@ -332,7 +336,7 @@ if (is_auth() && !$need_setup && $action !== '') {
         $content['cards'] = $cards;
         $content['updated'] = date('Y-m-d');
         jwrite($F_CONTENT, $content);
-        flash('Фото «' . $cards[$i]['title'] . '» обновлено. На сайте и в приложении появится в течение суток (кэш 6 часов).');
+        flash('Фото «' . $cards[$i]['title'] . '» обновлено. На сайте и в приложении появится при следующем открытии страницы.');
         header('Location: index.php?p=cards'); exit;
     }
 
@@ -348,7 +352,7 @@ if (is_auth() && !$need_setup && $action !== '') {
             $content['cards'] = $cards;
             $content['updated'] = date('Y-m-d');
             jwrite($F_CONTENT, $content);
-            flash('Порядок карточек обновлён: «' . $cards[$j]['title'] . '» теперь на месте №' . ($j + 1) . '. На сайте и в приложении — в течение суток (кэш 6 часов).');
+            flash('Порядок карточек обновлён: «' . $cards[$j]['title'] . '» теперь на месте №' . ($j + 1) . '. На сайте и в приложении — при следующем открытии страницы.');
         }
         header('Location: index.php?p=cards'); exit;
     }
@@ -369,7 +373,7 @@ if (is_auth() && !$need_setup && $action !== '') {
         $content['prices'][$i]['img'] = $res;
         $content['updated'] = date('Y-m-d');
         jwrite($F_CONTENT, $content);
-        flash('Фото карточки цен «' . ($content['prices'][$i]['cat'] ?? '') . '» обновлено. На сайте появится в течение суток (кэш 6 часов).');
+        flash('Фото карточки цен «' . ($content['prices'][$i]['cat'] ?? '') . '» обновлено. На сайте появится при следующем открытии страницы.');
         header('Location: index.php?p=cards'); exit;
     }
 
@@ -653,7 +657,7 @@ if ($page === 'content') {
     $rating = jread($F_RATING, ['rating'=>'5,0','count'=>0]);
     $content = jread($F_CONTENT, ['prices'=>[], 'certs'=>[]]);
 
-    echo '<h1>Рейтинг и цены<small>после сохранения сайт и приложение обновятся в течение суток (кэш 6 часов)</small></h1>';
+    echo '<h1>Рейтинг и цены<small>после сохранения сайт и приложение обновятся при следующем открытии страницы</small></h1>';
 
     echo '<div class="panel"><h2>Рейтинг Яндекс.Карт</h2>',
          '<form method="post">'; csrf_field();
@@ -746,7 +750,7 @@ if ($page === 'cards') {
     $cards = cards_current($content);
     $nCards = count($cards);
 
-    echo '<h1>Фото категорий<small>карточки на главной странице сайта и в приложении — после замены обновятся в течение суток (кэш 6 часов)</small></h1>';
+    echo '<h1>Фото категорий<small>карточки на главной странице сайта и в приложении — после замены обновятся при следующем открытии страницы</small></h1>';
     echo '<div class="panel"><h2>Карточки на главной: порядок и фото</h2>',
          '<p style="font-size:13px;color:var(--mut);margin-top:0">Стрелки ↑↓ меняют порядок карточек на главной странице (и в приложении). Номер слева — текущая позиция на сайте.</p>',
          '<div class="cardgrid">';

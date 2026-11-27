@@ -452,7 +452,7 @@ body.js .rv.in{opacity:1; transform:none}
 <p>Вы можете запросить уточнение, блокирование или удаление своих данных, а также отозвать согласие, позвонив по телефону <a href="tel:+79295223439" style="color:var(--gold);">+7 (929) 522-34-39</a>, написав на <a href="mailto:mycliomy@gmail.com" style="color:var(--gold);">mycliomy@gmail.com</a> или обратившись лично по адресу салона. Отзыв согласия действует на будущее и не затрагивает уже выполненную обработку.</p>
 <p style="margin-top:18px;color:var(--muted);font-size:13px;">Редакция от 06.10.2026</p>
 </div> <div style="margin-top:18px;"><a class="btn" href="#page-main" style="width:auto;">На главную →</a></div> </div> </section> </div> </main>
-<footer class="site"> <div class="container footer-in"> <div style="display:flex;align-items:center;gap:10px;"><img src="img/klio-logo-200.jpg?v=20261023" alt="КЛИО" style="width:26px;height:26px;object-fit:cover;border-radius:50%;"><span style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--gold);letter-spacing:.08em;">КЛИО</span><span style="font-size:12px;color:var(--muted);">· место, где о тебе заботятся</span></div> <div>© 2026 Салон красоты «Клио» · <b style="color:#7d2a35;">версия 26.11-Б2</b> · Москва, Открытое шоссе, 23 корп. 4 · <a href="#page-privacy" style="color:var(--gold);">Политика конфиденциальности</a></div> </div>
+<footer class="site"> <div class="container footer-in"> <div style="display:flex;align-items:center;gap:10px;"><img src="img/klio-logo-200.jpg?v=20261023" alt="КЛИО" style="width:26px;height:26px;object-fit:cover;border-radius:50%;"><span style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--gold);letter-spacing:.08em;">КЛИО</span><span style="font-size:12px;color:var(--muted);">· место, где о тебе заботятся</span></div> <div>© 2026 Салон красоты «Клио» · <b style="color:#7d2a35;">версия 27.11-В12</b> · Москва, Открытое шоссе, 23 корп. 4 · <a href="#page-privacy" style="color:var(--gold);">Политика конфиденциальности</a></div> </div>
 </footer>  <div class="modal-bk" id="bookBk"> <div class="modal"> <div id="bookForm"> <h3>Онлайн-запись</h3> <div class="hint">Выберите услугу и удобное время — администратор перезвонит в течение 10 минут для подтверждения.</div> <form class="c-form" id="bkForm"> <input type="text" id="bkName" placeholder="Ваше имя" required> <input type="tel" id="bkPhone" placeholder="Телефон" required> <select id="bkService"> <option>Парикмахерские услуги</option> <option>Маникюр</option> <option>Педикюр</option> <option>Массаж / СПА</option> <option>Косметология</option> <option>Макияж / брови</option> <option>Солярий</option> </select>  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;"> <label style="font-size:12px;color:var(--muted);">Желаемая дата<input type="date" id="bkDateD" style="margin-top:4px;"></label> <label style="font-size:12px;color:var(--muted);">Желаемое время<input type="time" id="bkDateT" style="margin-top:4px;"></label> </div> <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);margin:-4px 0 12px;cursor:pointer;"> <input type="checkbox" id="bkConsent"> <span>Согласен(на) на обработку <a href="#page-privacy" style="color:var(--gold);text-decoration:underline;">персональных данных</a></span> </label> <div class="hp-field" aria-hidden="true"><input type="text" id="bkHp" tabindex="-1" autocomplete="off"></div> <button class="btn btn-gold" type="submit" style="width:100%;">Записаться</button> </form> <button class="btn btn-sm" id="bookClose" style="width:100%;margin-top:8px;">Отмена</button> </div> <div class="modal-ok" id="bookOk">✓ Благодарим за вашу заявку!<br><small style="color:var(--muted);">В ближайшее время наш специалист свяжется с вами для подтверждения записи.</small></div> </div>
 </div>
 <script>
@@ -652,7 +652,9 @@ document.body.classList.add('js');
 })();
 </script>
 <script>
-/* Прайс и абонементы: подтягиваются из /api/content.json (редактируется в админке, кэш 6 ч, при сбое — вёрстка) */
+/* Прайс и абонементы: подтягиваются из /api/content.json (редактируется в админке).
+   localStorage — только для мгновенного первого рендера и офлайна; при каждом визите
+   фоново сверяемся с сервером, чтобы правки админки появлялись сразу. */
 (function(){
   function syncGrid(gridSel, cats){
     if(!Array.isArray(cats)||!cats.length) return;
@@ -730,13 +732,17 @@ document.body.classList.add('js');
   }
   var cached=null; try{ cached=JSON.parse(localStorage.getItem('klio_content')||'null'); }catch(e){}
   if(cached&&cached.j) applyContent(cached.j);
-  if(cached&&cached.t&&(Date.now()-cached.t)<21600000) return;
+  /* всегда фоново сверяемся с сервером (раньше до 6 ч показывался старый кэш —
+     заменённые в админке фото «откатывались» до истечения кэша) */
   var d=new Date();
   var stamp=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
-  fetch('/api/content.json?d='+stamp).then(function(res){ return res.ok?res.json():null; }).then(function(j){
+  fetch('/api/content.json?d='+stamp,{cache:'no-cache'}).then(function(res){ return res.ok?res.json():null; }).then(function(j){
     if(j&&(j.prices||j.certs||j.cards)){
-      applyContent(j);
-      try{ localStorage.setItem('klio_content', JSON.stringify({j:j,t:Date.now()})); }catch(e){}
+      var changed=!cached||!cached.j||JSON.stringify(cached.j)!==JSON.stringify(j);
+      if(changed){
+        applyContent(j);
+        try{ localStorage.setItem('klio_content', JSON.stringify({j:j,t:Date.now()})); }catch(e){}
+      }
     }
   }).catch(function(){});
 })();

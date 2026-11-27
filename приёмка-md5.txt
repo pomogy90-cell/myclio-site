@@ -890,3 +890,20 @@ f455d0392c3f0779af11313322fee717  manage/manage.js
 866fd5dc518862df13103a911bfee16e  manage/manage.css
 376b4740535bf0b128e911a17d98f999  app/manage.html
 92efc8f7f7d5e72aa4784a085178d113  index.html
+
+========== 27.11-В15 «Псевдо-cron синхронизации DIKIDI» ==========
+Раздел Crontab в триал-периоде Timeweb недоступен → синхронизация запускается сама:
+любой запрос к api/manage.php (приложение сотрудников опрашивает сервер каждые ~45 сек)
+при необходимости вызывает api/gcal-sync.php неблокирующим HTTP-вызовом (fire-and-forget),
+не чаще раза в 55 сек, только если sync_enabled=1 и Google подключён.
+Файлы (md5 с prod, сверено после выкладки):
+564572b513d812780d1618d9db3b694f  api/gcal-cron.php   (новый)
+aca811ea630e3bda7f3f09614c0c8648  api/gcal-sync.php   (+ignore_user_abort)
+6358a5d2a8f3983380969b5d506c7e61  api/manage.php      (+вызов gcal_maybe_spawn)
+Стенд 19/19: спаун при устаревшей синхронизации; запрет спауна при sync_enabled=0 /
+refresh_token пуст / свежем last_sync / свежем spawn.lock; полный цикл GCal→CRM
+(запись b1 src=dikidi, spec из маппинга, финансы пустые, syncToken tok-2, first_done);
+обновление access-токена через спаун; регрессия whoami/meta/events/state.
+Прод-приёмка: gcal-sync 403 без/с неверным токеном; manage.php state 401 без токена;
+футер «версия 27.11-В13» не тронут; content.json не перезаливался.
+GitHub main = 10ccbaa

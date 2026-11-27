@@ -189,6 +189,13 @@ $body = json_decode((string)file_get_contents('php://input'), true);
 if (!is_array($body)) $body = [];
 $action = $method === 'GET' ? (string)($_GET['action'] ?? '') : (string)($body['action'] ?? '');
 
+/* псевдо-cron: синхронизация DIKIDI запускается сама не чаще раза в ~60 сек,
+   пока кто-то работает с приложением/админкой (см. api/gcal-cron.php) */
+if (is_file(__DIR__ . '/gcal-cron.php')) {
+    require_once __DIR__ . '/gcal-cron.php';
+    try { gcal_maybe_spawn(); } catch (Throwable $e) {}
+}
+
 /* ================= LOGIN: код -> токен ================= */
 if ($action === 'login') {
     if (att_blocked()) out(['ok'=>false,'err'=>'Слишком много попыток. Подождите 15 минут.'], 429);

@@ -8,6 +8,7 @@
 require_once __DIR__ . '/gcal-lib.php';
 
 set_time_limit(150);
+ignore_user_abort(true); /* вызов может прийти из псевдо-cron (gcal-cron.php) — закрытие сокета не должно прерывать синхронизацию */
 header('Content-Type: application/json; charset=utf-8');
 
 $cfg = gcal_cfg();

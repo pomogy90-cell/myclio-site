@@ -50,7 +50,7 @@ function t2m(t){ var p = t.split(':'); return (+p[0])*60 + (+p[1]); }
 function m2t(m){ return p2(Math.floor(m/60)) + ':' + p2(m%60); }
 
 /* отпечаток состояния кассы — чтобы перерисовывать блок только при реальном изменении */
-function cashStamp(c){ return JSON.stringify([c.opening_set, c.opening, c.in, c.out, c.balance, (c.payouts || []).length]); }
+function cashStamp(c){ return JSON.stringify([c.opening_set, c.opening, c.in, c.in_full, c.rewards, c.dep, c.out, c.balance, (c.history || []).length]); }
 /* статьи расходов категории «Затраты» (зеркало списка в api/manage.php) */
 var CASH_ARTS = ['Расходы на салон «Клио»', 'Офисные расходы', 'Представительские расходы',
   'Оплата сервисов и программного обеспечения', 'Оплата сторонних услуг',
@@ -1522,21 +1522,29 @@ function balItems(){
    Остаток — всегда фактический (считает сервер, от периода не зависит).
    История выдачи — фильтруется выбранным в балансе периодом. */
 function cashHtml(r){
-  var c = S.cash || {opening_set:false, opening:0, balance:0, payouts:[]};
+  var c = S.cash || {opening_set:false, opening:0, balance:0, payouts:[], history:[]};
   var from = r[0], to = r[1];
-  /* операции выбранного периода; категории: cost — затраты, profit — прибыль */
-  var rows = (c.payouts || []).filter(function(p){
-    var d = new Date((p.t || 0) * 1000);
+  /* 28.11-В17 (ТЗ-5): единая история кассы — автопоступления (receipt), ручные внесения (deposit), изъятия (payout);
+     история показывается за выбранный период, остаток кассы всегда текущий */
+  var rows = (c.history || []).filter(function(h){
+    var d = new Date((h.t || 0) * 1000);
     var ds = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
     return ds >= from && ds <= to;
-  }).sort(function(a, b){ return (b.t || 0) - (a.t || 0); });
-  var costSum = 0, profitSum = 0;
-  rows.forEach(function(p){
-    if ((p.cat || 'cost') === 'profit') profitSum += p.amount || 0;
-    else costSum += p.amount || 0;
+  });
+  var costSum = 0, profitSum = 0, inSum = 0, depSum = 0;
+  rows.forEach(function(h){
+    if (h.kind === 'receipt') inSum += h.amount || 0;
+    else if (h.kind === 'deposit') depSum += h.amount || 0;
+    else if ((h.cat || 'cost') === 'profit') profitSum += h.amount || 0;
+    else costSum += h.amount || 0;
   });
   var flt = S.cashFlt || 'all';
-  var shown = rows.filter(function(p){ return flt === 'all' ? true : (p.cat || 'cost') === flt; });
+  var shown = rows.filter(function(h){
+    if (flt === 'all') return true;
+    if (flt === 'receipt') return h.kind === 'receipt';
+    if (flt === 'deposit') return h.kind === 'deposit';
+    return h.kind === 'payout' && (h.cat || 'cost') === flt;
+  });
 
   var left =
     '<div class="mng-cash-l">' +
@@ -1547,7 +1555,10 @@ function cashHtml(r){
         ? '<div class="mc-note">Наличные по записям: ' + rub(c.in_full || 0) + ' · из них мастерам: −' + rub(c.rewards) + '</div>'
         : '') +
       (c.opening_set
-        ? '<button class="mng-btn gold" id="cashOut" style="margin-top:6px;padding:11px 22px"' + (c.balance > 0 ? '' : ' disabled') + '>Изъятие кассы</button>'
+        ? '<div style="display:flex;gap:8px;margin-top:10px">' +
+            '<button class="mng-btn mc-btn-in" id="cashIn" style="flex:1;padding:11px 6px">+ Внести в кассу</button>' +
+            '<button class="mng-btn mc-btn-out" id="cashOut" style="flex:1;padding:11px 6px"' + (c.balance > 0 ? '' : ' disabled') + '>− Изъятие кассы</button>' +
+          '</div>'
         : '<div class="mc-first">' +
             '<div class="mc-first-t">Первый запуск кассы</div>' +
             '<div class="mc-first-s">Внесите фактический остаток наличных в кассе салона. Операция однократная — дальше остаток считается автоматически.</div>' +
@@ -1556,30 +1567,52 @@ function cashHtml(r){
               '<button class="mng-btn gold" id="cashOpenBtn" style="flex:1">Задать остаток</button>' +
             '</div>' +
           '</div>') +
-      '<div class="mc-hint">В кассу поступает оплата наличными за вычетом вознаграждения мастера — мастер получает свою часть сразу из наличных. Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
+      '<div class="mc-hint">В кассу поступает оплата наличными за вычетом вознаграждения мастера — мастер получает свою часть сразу из наличных. Кнопка «Внести в кассу» — для ручного внесения наличных (размен, подкрепление): такие суммы выручкой не считаются. Остаток не зависит от выбранного периода и переносится между днями, месяцами и годами.</div>' +
     '</div>';
 
-  var rowsHtml = shown.length ? shown.map(function(p){
-    var d = new Date((p.t || 0) * 1000);
+  var rowsHtml = shown.length ? shown.map(function(h){
+    var d = new Date((h.t || 0) * 1000);
     var dt = p2(d.getDate()) + '.' + p2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
-    var isP = (p.cat || 'cost') === 'profit';
+    if (h.kind === 'receipt') {
+      var num = String(h.bid || '').replace(/^b/i, '');
+      return '<div class="mc-row mc-link" data-bid="' + esc(h.bid || '') + '" title="Открыть запись">' +
+        '<div class="mc-r1"><b>Автоматическое поступление</b>' +
+          '<span class="mc-cat in">Поступление</span>' +
+          '<span class="mc-amt pos">+' + rub(h.amount || 0) + '</span></div>' +
+        '<div class="mc-r2">Заявка №' + esc(num) + (h.svc ? ' · ' + esc(h.svc) : '') + (h.spec ? ' · ' + esc(h.spec) : '') + '</div>' +
+        ((h.reward || 0) > 0 ? '<div class="mc-r2">Наличные ' + rub(h.gross || 0) + ' − мастеру ' + rub(h.reward) + '</div>' : '') +
+        '<div class="mc-r3">' + dt + ' · закрытие заявки</div>' +
+      '</div>';
+    }
+    if (h.kind === 'deposit') {
+      return '<div class="mc-row">' +
+        '<div class="mc-r1"><b>Ручное внесение</b>' +
+          '<span class="mc-cat in">Внесение</span>' +
+          '<span class="mc-amt pos">+' + rub(h.amount || 0) + '</span></div>' +
+        '<div class="mc-r2">Источник: <b>' + esc(h.source || '—') + '</b>' + (h.comment ? ' · ' + esc(h.comment) : '') + '</div>' +
+        '<div class="mc-r3">' + dt + ' · зарегистрировал(а): ' + esc(h.by || '—') + '</div>' +
+      '</div>';
+    }
+    var isP = (h.cat || 'cost') === 'profit';
     return '<div class="mc-row">' +
-      '<div class="mc-r1"><b>' + esc(isP ? 'Прибыль' : (p.article || 'Прочие расходы')) + '</b>' +
+      '<div class="mc-r1"><b>' + esc(isP ? 'Прибыль' : (h.article || 'Прочие расходы')) + '</b>' +
         '<span class="mc-cat ' + (isP ? 'profit' : 'cost') + '">' + (isP ? 'Прибыль' : 'Затраты') + '</span>' +
-        '<span class="mc-amt">−' + rub(p.amount || 0) + '</span></div>' +
-      '<div class="mc-r2">' + (isP ? 'Изъятие собственником' : 'Получатель: <b>' + esc(p.receiver || '—') + '</b>') + (p.comment ? ' · ' + esc(p.comment) : '') + '</div>' +
-      '<div class="mc-r3">' + dt + ' · зарегистрировал(а): ' + esc(p.by || '—') + '</div>' +
+        '<span class="mc-amt">−' + rub(h.amount || 0) + '</span></div>' +
+      '<div class="mc-r2">' + (isP ? 'Изъятие собственником' : 'Получатель: <b>' + esc(h.receiver || '—') + '</b>') + (h.comment ? ' · ' + esc(h.comment) : '') + '</div>' +
+      '<div class="mc-r3">' + dt + ' · зарегистрировал(а): ' + esc(h.by || '—') + '</div>' +
     '</div>';
-  }).join('') : '<div class="mc-empty">' + (flt === 'all' ? 'За выбранный период операций по кассе не было.' : (flt === 'cost' ? 'Затрат за выбранный период нет.' : 'Изъятий прибыли за выбранный период нет.')) + '</div>';
+  }).join('') : '<div class="mc-empty">' + ({all:'За выбранный период операций по кассе не было.', receipt:'Автоматических поступлений за выбранный период нет.', deposit:'Ручных внесений за выбранный период нет.', cost:'Затрат за выбранный период нет.', profit:'Изъятий прибыли за выбранный период нет.'}[flt] || 'За выбранный период операций по кассе не было.') + '</div>';
 
   var right =
     '<div class="mng-cash-r">' +
       '<div class="mc-kpis">' +
+        '<div class="mc-kpi in"><span>Поступления за период</span><b>' + rub(inSum + depSum) + '</b></div>' +
         '<div class="mc-kpi cost"><span>Затраты за период</span><b>' + rub(costSum) + '</b></div>' +
         '<div class="mc-kpi profit"><span>Прибыль за период</span><b>' + rub(profitSum) + '</b></div>' +
+        '<div class="mc-kpi dep"><span>Из них внесено вручную</span><b>' + rub(depSum) + '</b></div>' +
       '</div>' +
       '<div class="mc-rh"><span>История операций</span><span class="mc-flt">' +
-        [['all','Все'],['cost','Затраты'],['profit','Прибыль']].map(function(f){
+        [['all','Все'],['receipt','Поступления'],['deposit','Внесения'],['cost','Затраты'],['profit','Прибыль']].map(function(f){
           return '<button class="mng-btn sm' + (flt === f[0] ? ' on' : '') + '" data-cflt="' + f[0] + '">' + f[1] + '</button>';
         }).join('') + '</span></div>' +
       '<div class="mc-list">' + rowsHtml + '</div>' +
@@ -1591,6 +1624,12 @@ function cashHtml(r){
 function bindCash(body){
   var outBtn = document.getElementById('cashOut');
   if (outBtn) outBtn.onclick = openCashOut;
+  var inBtn = document.getElementById('cashIn');
+  if (inBtn) inBtn.onclick = openCashIn;
+  /* автопоступление кликабельно — открывает карточку записи */
+  Array.prototype.forEach.call(body.querySelectorAll('.mc-row[data-bid]'), function(rw){
+    rw.onclick = function(){ if (rw.dataset.bid && S.items[rw.dataset.bid]) openCard(rw.dataset.bid); };
+  });
   Array.prototype.forEach.call(body.querySelectorAll('[data-cflt]'), function(b){
     b.onclick = function(){ S.cashFlt = b.dataset.cflt; renderBal(); };
   });
@@ -1604,6 +1643,68 @@ function bindCash(body){
         toast('Начальный остаток кассы сохранён');
         if (S.view === 'bal') renderBal();
       }).catch(function(e){ toast(e.msg || 'Ошибка'); });
+    });
+  };
+}
+/* 28.11-В17 (ТЗ-5 п.3): ручное внесение наличных в кассу — не выручка, не вознаграждение */
+function openCashIn(){
+  var old = document.getElementById('mngOvl'); if (old) old.remove();
+  var bal = (S.cash || {}).balance || 0;
+  var ovl = document.createElement('div');
+  ovl.className = 'mng-ovl'; ovl.id = 'mngOvl';
+  var nw = new Date();
+  var dtStr = p2(nw.getDate()) + '.' + p2(nw.getMonth() + 1) + '.' + nw.getFullYear() + ' ' + p2(nw.getHours()) + ':' + p2(nw.getMinutes());
+  ovl.innerHTML =
+  '<div class="mng-card">' +
+    '<div class="mng-grip"></div><button class="mng-x" id="ciX">✕</button>' +
+    '<h2 style="margin-bottom:2px">Внести в кассу</h2>' +
+    '<div class="who">Текущий остаток наличных: <b>' + rub(bal) + '</b></div>' +
+    '<hr class="mng-hr">' +
+    '<label class="mng-lbl">Сумма внесения, ₽</label>' +
+    '<input class="mng-inp" id="ciSum" type="text" inputmode="numeric" placeholder="0" autocomplete="off">' +
+    '<label class="mng-lbl">Источник поступления денежных средств</label>' +
+    '<input class="mng-inp" id="ciSrc" list="ciSrcList" placeholder="Откуда деньги" autocomplete="off">' +
+    '<datalist id="ciSrcList"><option value="Подкрепление (размен)"></option><option value="Взнос собственника"></option><option value="Возврат подотчётных"></option><option value="Прочее"></option></datalist>' +
+    '<label class="mng-lbl">Комментарий (необязательно)</label>' +
+    '<input class="mng-inp" id="ciComm" placeholder="Примечание к операции" autocomplete="off">' +
+    '<div class="mc-after">Остаток после внесения: <b id="ciAfterSum">' + rub(bal) + '</b></div>' +
+    '<div class="mc-auto">Дата и время: ' + dtStr + ' · Регистрирует: ' + esc(S.name || '—') + '</div>' +
+    '<div class="mng-err" id="ciErr" style="display:none"></div>' +
+    '<div class="mng-actions">' +
+      '<button class="mng-btn" id="ciCancel">Отмена</button>' +
+      '<button class="mng-btn gold" id="ciDo" style="flex:1.7;padding:13px">Подтвердить внесение</button>' +
+    '</div>' +
+  '</div>';
+  root.appendChild(ovl);
+  document.getElementById('ciX').onclick = function(){ ovl.remove(); };
+  document.getElementById('ciCancel').onclick = function(){ ovl.remove(); };
+  ovl.onclick = function(e){ if (e.target === ovl) ovl.remove(); };
+  setTimeout(function(){ document.getElementById('ciSum').focus(); }, 80);
+
+  var sumEl = document.getElementById('ciSum');
+  var curSum = function(){ return parseInt((sumEl.value || '').replace(/[^\d]/g, ''), 10) || 0; };
+  sumEl.oninput = function(){ document.getElementById('ciAfterSum').textContent = rub(bal + curSum()); };
+  /* идентификатор операции: повторная отправка (двойной тап, обрыв сети) не внесёт деньги дважды */
+  var op = 'ci-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+
+  document.getElementById('ciDo').onclick = function(){
+    var err = document.getElementById('ciErr');
+    err.style.display = 'none';
+    var v = curSum();
+    var src = document.getElementById('ciSrc').value.trim();
+    var comm = document.getElementById('ciComm').value.trim();
+    if (v < 1) { err.style.display = 'block'; err.textContent = 'Укажите сумму внесения (от 1 ₽).'; return; }
+    if (!src) { err.style.display = 'block'; err.textContent = 'Укажите источник поступления денежных средств.'; return; }
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Проводим…';
+    api(null, {action:'cash_deposit', amount:v, source:src, comment:comm, op:op}).then(function(j){
+      if (j.cash) { S.cash = j.cash; S.cashStamp = cashStamp(j.cash); }
+      ovl.remove();
+      toast('💵 Внесено в кассу: ' + rub(v));
+      if (S.view === 'bal') renderBal();
+    }).catch(function(e){
+      btn.disabled = false; btn.textContent = 'Подтвердить внесение';
+      err.style.display = 'block'; err.textContent = e.msg || 'Не удалось провести операцию.';
     });
   };
 }
@@ -1996,6 +2097,7 @@ var EV_META = {
   lead_done:     {i:'📨', c:'blue',   ru:'Заявка обработана'},
   cash_opening:  {i:'🏦', c:'green',  ru:'Касса: начальный остаток'},
   cash_payout:   {i:'💸', c:'orange', ru:'Касса: изъятие наличных'},
+  cash_deposit:  {i:'💵', c:'green',  ru:'Касса: ручное внесение'},
   update:        {i:'🔄', c:'blue',   ru:'Обновление из DIKIDI'},
   gcal_conflict: {i:'⚡', c:'red',    ru:'Конфликт расписания (DIKIDI)'},
   gcal_notice:   {i:'📌', c:'amber',  ru:'Требует проверки (DIKIDI)'}

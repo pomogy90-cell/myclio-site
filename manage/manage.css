@@ -500,3 +500,19 @@ border-radius:14px;padding:11px 13px;align-items:flex-start}
   .mng-gridwrap{overflow-x:hidden}
 }
 .mc-note{margin-top:5px;font-size:12px;color:var(--mut);font-weight:600}
+
+/* 28.11-В17 (ТЗ-5): кнопки кассы, зелёные поступления, кликабельные строки истории */
+.mc-btn-in{border-color:#9cba82!important;color:#4e7a2a!important;background:#f4f9ee!important}
+.mc-btn-in:active{background:#e9f2dc!important}
+.mc-btn-out{border-color:#dfa79b!important;color:#a4442f!important;background:#fdf4f1!important}
+.mc-btn-out:active{background:#f9e8e4!important}
+.mc-btn-out:disabled{opacity:.45}
+.mc-amt.pos{color:#4e7a2a}
+.mc-cat.in{background:#e9f2dc;color:#4e7a2a}
+.mc-kpi.in{background:#f2f7ec;border-color:#dbe7c9}
+.mc-kpi.in b{color:#4e7a2a}
+.mc-kpi.dep{background:#f6f4ee;border-color:#e4ddcc}
+.mc-kpi.dep b{color:#8a6d2f}
+.mc-row.mc-link{cursor:pointer}
+.mc-row.mc-link:active{background:#faf6ef}
+.mc-auto{font-size:12px;color:var(--mut);margin-top:9px;font-weight:600}

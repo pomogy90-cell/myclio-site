@@ -247,6 +247,12 @@ $me = token_check();
 if (!$me) out(['ok'=>false,'err'=>'Нужна авторизация.'], 401);
 
 if ($action === 'whoami') out(['ok'=>true, 'name'=>$me['name']]);
+if (strpos($action,'finance_')===0) {
+    define('KLIO_FINANCE_AUTH',true);
+    require_once __DIR__.'/finance.php';
+    fin_handle($action,$body,$me,$method);
+    out(['ok'=>false],404);
+}
 
 if ($action === 'bind') { /* привязать/сменить имя токена (вход через админку) */
     $name = mb_substr(trim((string)($body['name'] ?? '')), 0, 40);
@@ -466,7 +472,7 @@ if ($action === 'save') {
             'id'=>'b' . $b['seq'], 'date'=>$date, 'start'=>$start, 'end'=>$end,
             'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'services'=>$services, 'spec'=>$spec, 'comment'=>$comm,
             'done'=>$done, 'amount'=>$amount, 'pay'=>$pay, 'reward'=>$reward, 'state'=>$state,
-            'cash_at'=>null,
+            'cash_at'=>null, 'paid_at'=>($amount!==null && $amount>0 && $pay && $state==='')?$now:null,
             'history'=>[['t'=>$now, 'u'=>$user, 'm'=>'Создана запись']],
             'v'=>$ver,
         ];
@@ -514,6 +520,7 @@ if ($action === 'save') {
     $it['client'] = $client; $it['phone'] = $phone; $it['comment'] = $comm;
     $it['dir'] = $dir; $it['service'] = $serv; $it['services'] = $services; $it['spec'] = $spec;
     $it['done'] = $done; $it['amount'] = $amount; $it['pay'] = $pay; $it['reward'] = $reward; $it['state'] = $state;
+    if (empty($it['paid_at']) && $amount!==null && $amount>0 && $pay && $state==='' && (empty($old['amount']) || empty($old['pay']))) $it['paid_at']=$now;
     /* метка поступления наличных: ставится один раз при первой фиксации оплаты «Наличные»;
        записи, закрытые до появления кассы, метку не получают и в учёт не попадают */
     if ($pay === 'cash' && $amount !== null && $amount > 0 && $state === '' && empty($it['cash_at'])) $it['cash_at'] = $now;

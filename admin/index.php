@@ -937,7 +937,9 @@ if ($page === 'salon') {
          '<h1>Управление салоном<small>Календарь записей, расчёты, баланс — всё синхронизировано с приложением команды</small></h1>',
          '<div id="klioManage" data-token="' . e($tok) . '"></div>',
          '<link rel="stylesheet" href="/manage/manage.css?v=13">',
-         '<script src="/manage/manage.js?v=13"></script>';
+         '<link rel="stylesheet" href="/manage/finance.css?v=1">',
+         '<script src="/manage/finance.js?v=1"></script>',
+         '<script src="/manage/manage.js?v=finance-1"></script>';
 }
 
 /* ================= ИНТЕГРАЦИЯ DIKIDI → Google Calendar → CRM (ТЗ №4, §8) ================= */

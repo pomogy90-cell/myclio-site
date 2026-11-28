@@ -307,6 +307,7 @@ function poll(){
       if (cs !== S.cashStamp) {
         S.cashStamp = cs; S.cash = j.cash;
         if (S.view === 'bal') renderBal();
+         if (S.view === 'finance' && window.KlioFinance) window.KlioFinance.changed();
       }
     }
     var changed = j.items || [];
@@ -381,7 +382,7 @@ function unfinishedList(){
   return out;
 }
 function viewTitle(){
-  return {cal:'Журнал', leads:'Заявки', bal:'Баланс', hist:'История действий', spec:'Специалисты', notif:'Уведомления'}[S.view] || 'Журнал';
+  return {cal:'Журнал', leads:'Заявки', bal:'Баланс', hist:'История действий', finance:'Финансовый учёт', spec:'Специалисты', notif:'Уведомления'}[S.view] || 'Журнал';
 }
 function updateBadges(){
   /* нижняя навигация: заявки + незавершённые */
@@ -422,6 +423,7 @@ function renderShell(){
       '<button class="mng-bni' + (S.view==='leads'?' on':'') + '" data-v="leads">' + IC.inbox + '<span>Заявки</span></button>' +
       '<button class="mng-bni' + (S.view==='bal'?' on':'') + '" data-v="bal">' + IC.bal + '<span>Баланс</span></button>' +
       '<button class="mng-bni' + (S.view==='hist'?' on':'') + '" data-v="hist">' + IC.hist + '<span>История</span></button>' +
+      '<button class="mng-bni' + (S.view==='finance'?' on':'') + '" data-v="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M6 17v-6m6 6V5m6 12v-9"/></svg><span>Учёт</span></button>' +
     '</nav>';
   Array.prototype.forEach.call(root.querySelectorAll('.mng-bni'), function(b){
     b.onclick = function(){ S.view = b.dataset.v; renderShell(); };
@@ -447,6 +449,7 @@ function renderShell(){
   else if (S.view === 'bal') renderBal();
   else if (S.view === 'leads') renderLeads();
   else if (S.view === 'hist') renderHist();
+  else if (S.view === 'finance') window.KlioFinance.mount(document.getElementById('mngBody'),api,toast);
   else if (S.view === 'notif') renderNotif();
   else renderSpecs();
   updateBadges();
@@ -455,6 +458,7 @@ function renderShell(){
 function refreshViews(){
   if (S.view === 'cal') renderCal(true);
   else if (S.view === 'bal') renderBal(true);
+  else if (S.view === 'finance' && window.KlioFinance) window.KlioFinance.changed();
 }
 function menuSheet(){
   var old = document.getElementById('mngSheet'); if (old) old.remove();

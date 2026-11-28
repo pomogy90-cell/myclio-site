@@ -31,6 +31,7 @@ $F_CASH    = $DATA . '/manage-cash.json';     /* касса: начальный 
 function out($arr, $code = 200){ http_response_code($code); echo json_encode($arr, JSON_UNESCAPED_UNICODE); exit; }
 function jread($f, $def){ if (!file_exists($f)) return $def; $j = json_decode((string)file_get_contents($f), true); return is_array($j) ? $j : $def; }
 function jwrite($f, $d){ file_put_contents($f, json_encode($d, JSON_UNESCAPED_UNICODE), LOCK_EX); }
+require_once __DIR__.'/master-catalog.php';
 
 /* ----- журнал «История действий»: только добавление, без API на изменение/удаление ----- */
 function hist_log($type, $obj, $oid, $title, $info, $user, $src, $extra = []){
@@ -78,7 +79,7 @@ function book_info($it){
 /* снимок записи для журнала (все поля, включая финансы) */
 function book_snap($it){
     $s = [];
-    foreach (['date','start','end','client','phone','dir','service','services','spec','comment','done','amount','pay','reward','state','src','needinfo','price_src'] as $k)
+    foreach (['date','start','end','client','phone','dir','service','services','spec','spec_id','comment','done','amount','pay','reward','state','src','needinfo','price_src'] as $k)
         $s[$k] = $it[$k] ?? null;
     return $s;
 }
@@ -283,22 +284,47 @@ if ($action === 'push_unregister') {
 if ($action === 'meta') {
     $m = jread($F_META, []);
     if (!isset($m['specialists'])) $m = ['specialists'=>['Анна','Ольга','Мария','Елена'], 'v'=>1];
+    $m['master_profiles_view']=klio_profiles($m);
     out(['ok'=>true, 'meta'=>$m]);
 }
 
 if ($action === 'save_meta') {
-    $list = $body['specialists'] ?? [];
-    if (!is_array($list)) $list = [];
-    $out_l = [];
-    foreach ($list as $s) { $s = mb_substr(trim((string)$s), 0, 40); if ($s !== '' && !in_array($s, $out_l, true)) $out_l[] = $s; }
-    if (!$out_l) out(['ok'=>false,'err'=>'Нужен хотя бы один специалист.'], 400);
-    $m = jread($F_META, ['v'=>0]);
-    $m['specialists'] = $out_l;
-    $m['v'] = (int)($m['v'] ?? 0) + 1;
-    jwrite($F_META, $m);
-    /* поднимем общую версию, чтобы все клиенты обновили meta */
-    $b = book_load(); $b['version']++; $b['meta_v'] = $m['v']; book_save($b);
-    out(['ok'=>true, 'meta'=>$m]);
+    $m = jread($F_META, ['specialists'=>['Анна','Ольга','Мария','Елена'], 'v'=>1]);
+    if (isset($body['master_profiles'])) {
+        if (!is_array($body['master_profiles']) || count($body['master_profiles'])>300) out(['ok'=>false,'err'=>'Неверный список специалистов.'],400);
+        if ((int)($body['meta_v'] ?? -1) !== (int)($m['v'] ?? 0)) out(['ok'=>false,'err'=>'Список изменился. Откройте раздел заново.'],409);
+        $old=klio_profiles($m); $catalog=klio_catalog(); $profiles=[]; $names=[]; $ids=[]; $active=[];
+        if (!$catalog) out(['ok'=>false,'err'=>'Прайс недоступен.'],503);
+        foreach ($body['master_profiles'] as $row) {
+            if (!is_array($row) || !is_string($row['name'] ?? null)) out(['ok'=>false,'err'=>'Укажите имя специалиста.'],400);
+            $name=trim($row['name']); if ($name==='' || mb_strlen($name)>40 || in_array($name,$names,true)) out(['ok'=>false,'err'=>'Имена должны быть уникальными, до 40 символов.'],400);
+            $id=(string)($row['id'] ?? '');
+            if ($id!=='' && !klio_find_master($old,'',$id)) out(['ok'=>false,'err'=>'Неизвестный специалист.'],400);
+            if ($id==='') { $prior=klio_find_master($old,$name); $id=$prior['id'] ?? bin2hex(random_bytes(16)); }
+            if (in_array($id,$ids,true)) out(['ok'=>false,'err'=>'Повтор специалиста.'],400);
+            $enabled=!empty($row['active']); $services=[];
+            foreach (($row['services'] ?? []) as $s) {
+                if (!is_array($s)) continue;
+                foreach ($catalog as $c) if (($s['dir'] ?? '')===$c['dir'] && ($s['name'] ?? '')===$c['name']) {
+                    $v=['dir'=>$c['dir'],'name'=>$c['name']]; if (!in_array($v,$services,true)) $services[]=$v; break;
+                }
+            }
+            if ($enabled && !$services) out(['ok'=>false,'err'=>'Назначьте услуги мастеру «'.$name.'» или отключите его.'],400);
+            $profiles[]=['id'=>$id,'name'=>$name,'active'=>$enabled,'configured'=>true,'services'=>$services];
+            $names[]=$name; $ids[]=$id; if ($enabled) $active[]=$name;
+        }
+        foreach ($old as $o) if (!in_array($o['id'],$ids,true)) out(['ok'=>false,'err'=>'Существующего специалиста можно отключить, но не удалять.'],400);
+        $m['master_profiles']=$profiles; $m['specialists']=$active;
+    } else {
+        if (isset($m['master_profiles'])) out(['ok'=>false,'err'=>'Обновите приложение для редактирования специалистов.'],409);
+        $list = $body['specialists'] ?? []; $out_l = [];
+        if (is_array($list)) foreach ($list as $s) { $s=mb_substr(trim((string)$s),0,40); if ($s!==''&&!in_array($s,$out_l,true)) $out_l[]=$s; }
+        if (!$out_l) out(['ok'=>false,'err'=>'Нужен хотя бы один специалист.'],400);
+        $m['specialists']=$out_l;
+    }
+    $m['v']=(int)($m['v'] ?? 0)+1;
+    if (file_put_contents($F_META,json_encode($m,JSON_UNESCAPED_UNICODE),LOCK_EX)===false) out(['ok'=>false,'err'=>'Не удалось сохранить список.'],500);
+    out(['ok'=>true,'meta'=>$m]);
 }
 
 /* ================= LEADS: заявки с сайта/приложения ================= */
@@ -407,6 +433,7 @@ if ($action === 'state') {
     $mv = (int)($m['v'] ?? 1);
     if ($since === 0 || (int)($b['meta_v'] ?? 1) !== $mv || true) { /* meta лёгкая — отдаём всегда */
         if (!isset($m['specialists'])) $m = ['specialists'=>['Анна','Ольга','Мария','Елена'], 'v'=>1];
+        $m['master_profiles_view']=klio_profiles($m);
         $resp['meta'] = $m;
     }
     out($resp);
@@ -448,6 +475,14 @@ if ($action === 'save') {
     if (!$services) $services = [$serv];
     if ($services[0] !== $serv) $serv = $services[0];
     $svcLine = implode(' + ', $services);
+    $prev=null;
+    if (!$isNew) foreach ($b['items'] as $existing) if (($existing['id'] ?? '')===$id) { $prev=$existing; break; }
+    $prevServices=$prev['services'] ?? [$prev['service'] ?? ''];
+    $assignmentChanged=$isNew || ($prev && (($prev['spec'] ?? '')!==$spec || ($prev['dir'] ?? '')!==$dir || $prevServices!==$services));
+    $masterMeta=jread($F_META,[]);
+    if ($assignmentChanged && !klio_assignment_ok($masterMeta,$spec,$dir,$services)) out(['ok'=>false,'err'=>'Специалист не оказывает выбранные услуги.'],422);
+    $profile=klio_find_master(klio_profiles($masterMeta),$spec);
+    $specId=$profile['id'] ?? null;
 
     $done   = !empty($body['done']) ? 1 : 0;
     $amount = $body['amount'] ?? null;
@@ -464,7 +499,7 @@ if ($action === 'save') {
         $b['seq']++;
         $it = [
             'id'=>'b' . $b['seq'], 'date'=>$date, 'start'=>$start, 'end'=>$end,
-            'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'services'=>$services, 'spec'=>$spec, 'comment'=>$comm,
+            'client'=>$client, 'phone'=>$phone, 'dir'=>$dir, 'service'=>$serv, 'services'=>$services, 'spec'=>$spec, 'spec_id'=>$specId, 'comment'=>$comm,
             'done'=>$done, 'amount'=>$amount, 'pay'=>$pay, 'reward'=>$reward, 'state'=>$state,
             'cash_at'=>null,
             'history'=>[['t'=>$now, 'u'=>$user, 'm'=>'Создана запись']],
@@ -513,6 +548,7 @@ if ($action === 'save') {
     $it['date'] = $date; $it['start'] = $start; $it['end'] = $end;
     $it['client'] = $client; $it['phone'] = $phone; $it['comment'] = $comm;
     $it['dir'] = $dir; $it['service'] = $serv; $it['services'] = $services; $it['spec'] = $spec;
+    if ($assignmentChanged) $it['spec_id']=$specId;
     $it['done'] = $done; $it['amount'] = $amount; $it['pay'] = $pay; $it['reward'] = $reward; $it['state'] = $state;
     /* метка поступления наличных: ставится один раз при первой фиксации оплаты «Наличные»;
        записи, закрытые до появления кассы, метку не получают и в учёт не попадают */

@@ -234,7 +234,7 @@ if ('serviceWorker' in navigator) {
       <h2 class="sec" style="margin-top:14px">Запись в салон</h2>
       <p class="hint">Оставьте заявку — администратор перезвонит в течение 15 минут в рабочее время и подтвердит запись.</p>
       <div class="blk"><div class="blk-t">Услуга</div><div class="chips" id="bChips"></div></div>
-      <div class="blk"><div class="blk-t">Мастер</div><div class="mchips" id="bMasters"></div></div>
+      <div class="blk"><div class="blk-t">Мастер</div><div class="mchips" id="bMasters"></div><label class="hint" style="display:block;margin-top:8px">Конкретная услуга<select id="bDetail" aria-label="Конкретная услуга" style="width:100%;margin-top:5px"><option value="">Уточнить при записи</option></select></label></div>
       <div class="blk"><div class="blk-t">Дата и время</div>
         <div class="drow"><label class="fld"><span>Дата</span><input class="inp" type="date" id="bDate"></label><label class="fld"><span>Желаемое время</span><select class="inp" id="bTime"></select></label></div>
       </div>
@@ -300,7 +300,7 @@ if ('serviceWorker' in navigator) {
   <div class="bk" id="bk"></div>
   <div class="sheet" id="sheet"><button class="sh-close" id="shClose">✕</button><div class="handle"></div><h3>Быстрая запись</h3><p class="hint">Оставьте заявку — перезвоним в течение 15 минут.</p>
     <div class="blk" style="box-shadow:none;background:#fff"><div class="blk-t">Услуга</div><div class="chips" id="shChips"></div></div>
-    <div class="blk" style="box-shadow:none;background:#fff"><div class="blk-t">Мастер</div><div class="mchips" id="shMasters"></div></div>
+    <div class="blk" style="box-shadow:none;background:#fff"><div class="blk-t">Мастер</div><div class="mchips" id="shMasters"></div><label class="hint" style="display:block;margin-top:8px">Конкретная услуга<select id="shDetail" aria-label="Конкретная услуга" style="width:100%;margin-top:5px"><option value="">Уточнить при записи</option></select></label></div>
     <div class="blk" style="box-shadow:none;background:#fff"><div class="blk-t">Дата и время</div>
       <div class="drow"><label class="fld"><span>Дата</span><input class="inp" type="date" id="shDate"></label><label class="fld"><span>Желаемое время</span><select class="inp" id="shTime"></select></label></div></div>
     <div class="blk" style="box-shadow:none;background:#fff"><div class="blk-t">Контакты</div>
@@ -321,19 +321,41 @@ if ('serviceWorker' in navigator) {
 
 
 <script>
+(function(g){
+'use strict';
+var data={services:[],masters:[]}, pending=null;
+function norm(s){return String(s||'').toLowerCase().trim();}
+function matches(category,s){
+ var c=norm(category),d=norm(s.dir),n=norm(s.name);
+ if(c==='маникюр')return d==='ногтевой сервис'&&!/педикюр|стоп|пальчик/.test(n);
+ if(c==='педикюр')return d==='ногтевой сервис'&&(/педикюр|стоп|пальчик/.test(n)||!/маникюр|наращивание|моделирование|укрепление/.test(n));
+ if(/макияж|брови/.test(c))return d==='визаж'||d==='брови, ресницы';
+ if(/массаж|спа/.test(c))return d==='массаж и спа';
+ if(/парикмахер/.test(c))return d==='парикмахерский зал';
+ return c===d;
+}
+function refresh(){
+ if(pending)return pending;
+ pending=fetch('https://myclio.ru/api/masters.php',{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('catalog');return r.json();}).then(function(j){if(!j.ok||!Array.isArray(j.services)||!Array.isArray(j.masters))throw Error('catalog');data=j;return true;}).catch(function(){data={services:[],masters:[]};return false;}).finally(function(){pending=null;});return pending;
+}
+function rows(category,id){return data.services.filter(function(s){return matches(category,s)&&(!id||data.masters.some(function(m){return m.id===id&&m.services.some(function(x){return x.dir===s.dir&&x.name===s.name;});}));});}
+function masters(category,row){return data.masters.filter(function(m){return m.services.some(function(s){return row?s.dir===row.dir&&s.name===row.name:matches(category,s);});});}
+function selectRows(select,category,id,keep){select.replaceChildren(new Option('Уточнить при записи',''));rows(category,id).forEach(function(s){var o=new Option(s.name+(s.price?' · '+s.price:''),JSON.stringify([s.dir,s.name]));select.add(o);});if(keep&&Array.from(select.options).some(function(o){return o.value===keep;}))select.value=keep;}
+function row(select){try{var a=JSON.parse(select.value);return {dir:a[0],name:a[1]};}catch(e){return null;}}
+function fillMasters(select,category,detail,keep){select.replaceChildren(new Option(category==='Солярий'?'Без мастера':'Любой мастер',''));masters(category,detail).forEach(function(m){select.add(new Option(m.name,m.id));});if(keep&&Array.from(select.options).some(function(o){return o.value===keep;}))select.value=keep;}
+function bind(category,detail,master){function paint(){var d=row(detail);fillMasters(master,category.value,d,master.value);}category.addEventListener('change',function(){master.value='';selectRows(detail,category.value,'','');paint();});detail.addEventListener('change',paint);master.addEventListener('change',function(){selectRows(detail,category.value,master.value,detail.value);});return function(){selectRows(detail,category.value,master.value,detail.value);paint();};}
+g.KlioBooking={refresh:refresh,rows:rows,masters:masters,selectRows:selectRows,row:row,fillMasters:fillMasters,bind:bind};
+})(window);
+
+</script>
+<script>
 const DATA = {"services": [{"img": "img/klio-strizhka-brashing.webp", "name": "Парикмахерский зал", "sub": "стрижки · окрашивание · уходы · укладки"}, {"img": "img/klio-manikyur-gel-lak.webp", "name": "Маникюр", "sub": "аппаратный · комбинированный · дизайн"}, {"img": "img/klio-pedikyur-spa.webp", "name": "Педикюр", "sub": "аппаратный · СПА · покрытие"}, {"img": "img/klio-massazh-spiny.webp", "name": "Массаж", "sub": "классический · спортивный · антистресс"}, {"img": "img/klio-kosmetologiya-maska.webp", "name": "Косметология", "sub": "чистка · уходы · массаж лица"}, {"img": "img/klio-brovi-korrekciya.webp", "name": "Макияж и брови", "sub": "вечерний · свадебный · коррекция"}, {"img": "img/klio-solyariy.webp", "name": "Солярий", "sub": "вертикальный · абонементы"}, {"img": "img/klio-spa-programmy.jpg", "name": "СПА-программы", "sub": "ритуалы для тела и души"}], "prices": [{"cat": "Парикмахерский зал", "rows": [["Женская стрижка", "от 1 200 ₽"], ["Мужская стрижка", "от 800 ₽"], ["Детская стрижка", "от 700 ₽"], ["Окрашивание (любой сложности)", "от 3 500 ₽"], ["Мелирование / airtouch", "от 4 500 ₽"], ["Укладка", "от 1 000 ₽"], ["Кератиновое выпрямление", "от 4 000 ₽"], ["Массаж головы", "1 200 ₽"]]}, {"cat": "Маникюр", "rows": [["Маникюр аппаратный", "от 1 400 ₽"], ["Маникюр комбинированный", "от 1 600 ₽"], ["Покрытие гель-лак", "от 1 000 ₽"], ["Наращивание ногтей", "от 2 500 ₽"], ["Дизайн (френч, стемпинг, роспись)", "от 200 ₽"]]}, {"cat": "Педикюр", "rows": [["Педикюр аппаратный", "от 2 200 ₽"], ["Педикюр СПА", "от 2 800 ₽"]]}, {"cat": "Массаж и СПА", "rows": [["Классический массаж (60 мин)", "от 2 800 ₽"], ["Спортивный массаж", "от 3 000 ₽"], ["Антистресс-массаж", "от 2 600 ₽"], ["Массаж спины (30 мин)", "от 1 500 ₽"], ["Массаж лица", "от 1 800 ₽"], ["СПА-программа для тела", "от 4 500 ₽"]]}, {"cat": "Косметология", "rows": [["Чистка лица", "от 2 500 ₽"], ["Уходовая программа", "от 3 000 ₽"], ["Пилинг", "от 2 800 ₽"], ["Макияж дневной", "от 1 800 ₽"], ["Макияж вечерний / свадебный", "от 2 500 ₽"], ["Коррекция и окрашивание бровей", "от 1 200 ₽"]]}, {"cat": "Солярий", "rows": [["Солярий (1 минута)", "от 60 ₽"], ["Солярий (4 минуты)", "от 250 ₽"]]}], "certs": [{"cat": "Массаж — 5 + 1 в подарок", "rows": [["Абонемент на 6 массажей", "14 000 ₽"]]}, {"cat": "Солярий — 10 посещений", "rows": [["Абонемент 10 × 10 минут", "2 500 ₽"]]}, {"cat": "Маникюр + покрытие — 4 визита", "rows": [["4 визита к мастеру", "8 900 ₽"]]}, {"cat": "СПА-день для двоих", "rows": [["Массаж + педикюр + уход за лицом", "12 000 ₽"]]}], "reviews": [{"text": "Делала окрашивание и стрижку — результат превзошёл ожидания! Мастер подобрала уход именно для моего типа волос, всё объяснила. Атмосфера очень уютная, чай предложили.", "name": "Анна", "role": "окрашивание, стрижка"}, {"text": "Лучший массаж в районе! Хожу уже полгода, спина благодарит. Записываюсь заранее на месяц вперёд — мастер на вес золота.", "name": "Дмитрий", "role": "спортивный массаж"}, {"text": "Маникюр держится третью неделю — впервые такое! Аппаратный маникюр аккуратный, безопасный, дизайн сделали именно такой, как просила.", "name": "Мария", "role": "маникюр, покрытие"}, {"text": "Педикюр — это отдельная любовь. СПА-уход с пилингом и маской, ноги как у младенца. Мастер стерильность соблюдает идеально.", "name": "Екатерина", "role": "педикюр СПА"}, {"text": "Чистка лица прошла на высшем уровне: без боли, без покраснений, кожа сияет неделю. Теперь только сюда.", "name": "Ольга", "role": "косметология"}, {"text": "Стригусь здесь больше года. Всегда чётко по времени, без ожидания, результат стабильно отличный. Рекомендую.", "name": "Сергей", "role": "мужская стрижка"}, {"text": "Делала окрашивание и стрижку — результат превзошёл ожидания! Мастер посоветовала уход именно для моего типа волос. Атмосфера очень уютная.", "name": "Анна", "role": "окрашивание, стрижка"}, {"text": "Лучший массаж в районе! Хожу к мастеру на спортивный массаж уже полгода, спина благодарит. Записываюсь заранее на месяц вперёд.", "name": "Дмитрий", "role": "спортивный массаж"}, {"text": "Маникюр держится третью неделю — впервые такое! Аппаратный маникюр безопасный, аккуратный, дизайн сделали именно такой, как я просила.", "name": "Мария", "role": "маникюр, покрытие"}], "phone": "+7 (929) 522-34-39", "hero": "img/klio-resepshen.webp", "logo": "img/klio-logo-180.jpg", "address": "Москва, Открытое шоссе, 23 корп. 4 · 5 минут от м. Бульвар Рокоссовского", "hours": "Ежедневно 10:00 — 21:00 · по предварительной записи"};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let SVC=DATA.services, CERTS=DATA.certs, REVS=DATA.reviews;
 
-/* ---------- мастера ---------- */
-const MASTERS=[
- {n:'Любой мастер',r:'салон подберёт',s:null},
- {n:'Анна',r:'топ-стилист',s:['Парикмахерский зал']},
- {n:'Мария',r:'nail-мастер',s:['Маникюр','Педикюр']},
- {n:'Дмитрий',r:'мастер массажа',s:['Массаж','СПА-программы']},
- {n:'Ольга',r:'косметолог',s:['Косметология']},
- {n:'Елена',r:'визажист · бровист',s:['Макияж и брови']}
-];
+/* ---------- мастера из CRM ---------- */
+const escBooking=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function refreshAppMasters(){return KlioBooking.refresh().then(()=>{[['#bChips','#bMasters'],['#shChips','#shMasters']].forEach(([c,m])=>{const on=$(c).querySelector('.chip.on');if(on)selService(c,m,on.dataset.n,true);});});}
 
 /* ---------- профиль клиента (хранится только в его браузере) ---------- */
 const PROF={get(){try{return JSON.parse(localStorage.getItem('klio_prof')||'{}')}catch(e){return{}}},set(p){try{localStorage.setItem('klio_prof',JSON.stringify(p))}catch(e){}}};
@@ -356,7 +378,7 @@ function go(id,push=true){
   $$('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===tab));
   $('.nav').style.display='flex';
   $('#main').scrollTop=0;window.scrollTo(0,0);
-  if(id==='s-book')fillProfile();
+  if(id==='s-book'){fillProfile();refreshAppMasters();}
 }
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return;}
@@ -411,18 +433,31 @@ $('#shDate').addEventListener('change',()=>syncTimes('#shDate','#shTime'));
 /* ---------- шторка записи ---------- */
 let ALL=[...SVC.map(s=>s.name),...CERTS.map(c=>c.cat)];
 function chipsHTML(sel){return ALL.map(n=>`<button class="chip${n===sel?' on':''}" data-n="${n}">${n}</button>`).join('');}
-function mastersFor(svc){const l=MASTERS.filter(m=>!m.s||m.s.includes(svc));return l.length?l:[MASTERS[0]];}
-function mastersHTML(svc,sel){return mastersFor(svc).map(m=>`<button class="mchip${m.n===sel?' on':''}" data-m="${m.n}"><span class="ma">${m.n==='Любой мастер'?'★':m.n[0]}</span><span>${m.n}<small>${m.r}</small></span></button>`).join('');}
-function selService(boxSel,mSel,name){
-  $$(boxSel+' .chip').forEach(c=>c.classList.toggle('on',c.dataset.n===name));
-  const m=$(mSel), cur=m.querySelector('.mchip.on');
-  m.innerHTML=mastersHTML(name,cur?cur.dataset.m:'');
-  if(!m.querySelector('.mchip.on'))m.querySelector('.mchip').classList.add('on');
+function detailFor(mSel){return $(mSel.replace('Masters','Detail'));}
+function mastersHTML(svc,sel,row){
+ const items=[{id:'',name:svc==='Солярий'?'Без мастера':'Любой мастер'},...KlioBooking.masters(svc,row)];
+ return items.map(m=>'<button type="button" class="mchip'+(m.id===sel?' on':'')+'" data-id="'+escBooking(m.id)+'" data-m="'+escBooking(m.name)+'"><span class="ma">'+(m.id?escBooking(m.name[0]):'★')+'</span><span>'+escBooking(m.name)+'</span></button>').join('');
 }
+function selService(boxSel,mSel,name,preserve=false){
+ $$(boxSel+' .chip').forEach(c=>c.classList.toggle('on',c.dataset.n===name));
+ const m=$(mSel),cur=m.querySelector('.mchip.on'), detail=detailFor(mSel);
+ const id=preserve&&cur?cur.dataset.id:'';
+ KlioBooking.selectRows(detail,name,id,preserve?detail.value:'');
+ m.innerHTML=mastersHTML(name,id,KlioBooking.row(detail));
+ if(!m.querySelector('.mchip.on'))m.querySelector('.mchip').classList.add('on');
+}
+[['#bChips','#bMasters'],['#shChips','#shMasters']].forEach(([c,m])=>{
+ const detail=detailFor(m);detail.addEventListener('change',()=>{
+   const on=$(c).querySelector('.chip.on'),cur=$(m).querySelector('.mchip.on');
+   if(!on)return;$(m).innerHTML=mastersHTML(on.dataset.n,cur?cur.dataset.id:'',KlioBooking.row(detail));
+   if(!$(m).querySelector('.mchip.on'))$(m).querySelector('.mchip').classList.add('on');
+ });
+});
 function openSheet(sel){
   $('#shChips').innerHTML=chipsHTML(sel||'');
   selService('#shChips','#shMasters',sel||SVC[0].name);
   fillProfile();
+  refreshAppMasters();
   $('#bk').classList.add('show');$('#sheet').classList.add('show');
 }
 function closeSheet(){$('#bk').classList.remove('show');$('#sheet').classList.remove('show');}
@@ -440,7 +475,7 @@ document.addEventListener('click',e=>{
     else c.classList.toggle('on');
   }
   const m=e.target.closest('.mchip');
-  if(m)m.parentElement.querySelectorAll('.mchip').forEach(x=>x.classList.toggle('on',x===m));
+  if(m){m.parentElement.querySelectorAll('.mchip').forEach(x=>x.classList.toggle('on',x===m));const ms='#'+m.parentElement.id,c=ms.replace('Masters','Chips'),on=$(c).querySelector('.chip.on'),d=detailFor(ms);if(on)KlioBooking.selectRows(d,on.dataset.n,m.dataset.id,d.value);}
 });
 
 function markErr(el,bad){el.classList.toggle('err',bad);if(bad)el.addEventListener('input',()=>el.classList.remove('err'),{once:true});}
@@ -456,11 +491,11 @@ const MES=['января','февраля','марта','апреля','мая',
 function fmtDate(d){const p=(d||'').split('-');if(p.length!==3||isNaN(+p[2])||isNaN(+p[1]))return 'дата по согласованию';return +p[2]+' '+MES[+p[1]-1];}
 function success(title,text,sumHTML){$('#okTitle').textContent=title;$('#okText').textContent=text;const s=$('#okSum');if(sumHTML){s.innerHTML=sumHTML;s.style.display='block';}else{s.style.display='none';}closeSheet();go('s-success');renderQuick();}
 function bookSum(chipBox,mBox,dSel,tSel){
-  const svc=(document.querySelector(chipBox+' .chip.on')||{dataset:{}}).dataset.n||'';
+  const cat=(document.querySelector(chipBox+' .chip.on')||{dataset:{}}).dataset.n||'', detail=KlioBooking.row(detailFor(mBox)), svc=detail?detail.name:cat;
   const m=(document.querySelector(mBox+' .mchip.on')||{dataset:{}}).dataset.m||'';
-  PROF.set(Object.assign(PROF.get(),{last:{svc:svc,m:m}}));
+  PROF.set(Object.assign(PROF.get(),{last:{svc:cat,m:m,detail:detailFor(mBox).value}}));
   const tv=$(tSel).value;
-  return '<b>'+svc+'</b><br>'+m+' · '+fmtDate($(dSel).value)+(tv?', '+tv:'');
+  return '<b>'+escBooking(svc)+'</b><br>'+escBooking(m)+' · '+fmtDate($(dSel).value)+(tv?', '+tv:'');
 }
 const API='https://myclio.ru/api/lead';
 const RATING_URL='https://myclio.ru/api/rating.json';
@@ -505,6 +540,7 @@ function applyContent(j){
     const box=$(sel); if(!box||!box.innerHTML) return;
     const on=box.querySelector('.chip.on');
     box.innerHTML=chipsHTML(on?on.dataset.n:'');
+    if(on)selService(sel,sel.replace('Chips','Masters'),on.dataset.n,true);
   });
 }
 function syncContent(){
@@ -548,15 +584,18 @@ async function postLeadApp(type, fields){
   }catch(e){return false;}
 }
 function bookFields(nameSel,phoneSel,chipBox,mBox,dSel,tSel){
+  const d=KlioBooking.row(detailFor(mBox)), m=$(mBox).querySelector('.mchip.on'),cat=($(chipBox).querySelector('.chip.on')||{dataset:{}}).dataset.n||'';
   return {'Имя':$(nameSel).value.trim(),'Телефон':$(phoneSel).value.trim(),
-    'Услуга':(document.querySelector(chipBox+' .chip.on')||{dataset:{}}).dataset.n||'',
-    'Мастер':(document.querySelector(mBox+' .mchip.on')||{dataset:{}}).dataset.m||'',
+    'Услуга':d?d.name:cat,'Направление':d?d.dir:'',
+    'Мастер':m?m.dataset.m:'Любой мастер','ID мастера':m?m.dataset.id:'',
     'Желаемая дата':$(dSel).value,'Желаемое время':$(tSel).value};
 }
 async function submitBooking(btnId,nameSel,phoneSel,chipBox,mBox,dSel,tSel){
+  const fields=bookFields(nameSel,phoneSel,chipBox,mBox,dSel,tSel);
+  if(fields['ID мастера']&&!fields['Направление']){toast('Выберите конкретную услугу мастера');return;}
   if(!sendForm(nameSel,phoneSel))return;
   const btn=$(btnId),old=btn.textContent; btn.disabled=true; btn.textContent='Отправка…';
-  const ok=await postLeadApp('Запись из приложения', bookFields(nameSel,phoneSel,chipBox,mBox,dSel,tSel));
+  const ok=await postLeadApp('Запись из приложения', fields);
   btn.disabled=false; btn.textContent=old;
   if(ok){ success('Благодарим за вашу заявку!','В ближайшее время наш специалист свяжется с вами для подтверждения записи.',bookSum(chipBox,mBox,dSel,tSel)); }
   else{ toast('Не удалось отправить — проверьте интернет и нажмите «Отправить» ещё раз. Данные сохранены.'); }
@@ -569,11 +608,12 @@ function renderQuick(){
   const box=$('#quickBook');if(!box)return;
   const p=PROF.get();
   if(!(p.last&&p.last.svc)){box.innerHTML='';return;}
-  box.innerHTML=`<div class="qbook" id="qbGo"><span class="qi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>Снова: ${p.last.svc}</b><span>${p.last.m||'Любой мастер'} · запись в два касания</span></div><span class="go">›</span></div>`;
+  box.innerHTML=`<div class="qbook" id="qbGo"><span class="qi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>Снова: ${escBooking(p.last.svc)}</b><span>${escBooking(p.last.m||'Любой мастер')} · запись в два касания</span></div><span class="go">›</span></div>`;
   $('#qbGo').addEventListener('click',()=>{
     go('s-book');
     selService('#bChips','#bMasters',p.last.svc);
-    if(p.last.m)$$('#bMasters .mchip').forEach(x=>x.classList.toggle('on',x.dataset.m===p.last.m));
+    if(p.last.detail){const d=detailFor('#bMasters');if(Array.from(d.options).some(o=>o.value===p.last.detail)){d.value=p.last.detail;d.dispatchEvent(new Event('change'));}}
+    const prev=$('#bMasters .mchip').find(x=>x.dataset.m===p.last.m);if(prev)prev.click();
     toast(p.n?('Рады видеть снова, '+p.n+'!'):'Данные прошлой записи подставлены');
   });
 }
@@ -586,6 +626,7 @@ setTimeout(hideSplash,3000);
 fillProfile();
 syncRating();
 syncContent();
+refreshAppMasters();
 </script>
 
 </body>

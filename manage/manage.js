@@ -255,7 +255,8 @@ function boot(){
   pushBridge();
   var pContent = fetch(CONTENT).then(function(r){ return r.json(); }).catch(function(){ return {prices:[]}; });
   pContent.then(function(c){
-    S.dirs = (c.prices || []).map(function(x){ var pr = {}; (x.rows||[]).forEach(function(r){ var p = parseInt(String(r[1]||'').replace(/[^\d]/g,''),10); pr[r[0]] = isNaN(p) ? null : p; }); return {cat:x.cat, rows:(x.rows||[]).map(function(r){ return r[0]; }), price:pr}; });
+    S.dirs = (c.prices || []).map(function(x){ var pr = {}; (x.rows||[]).forEach(function(r){ var p = parseInt(String(r[1]||'').replace(/[^\d]/g,''),10); pr[String(r[0]).trim()] = isNaN(p) ? null : p; }); return {cat:x.cat, rows:(x.rows||[]).map(function(r){ return String(r[0]).trim(); }), price:pr}; });
+    if(!S.dirs.some(function(d){return d.cat===SOL_DIR;})) S.dirs.push({cat:SOL_DIR,rows:SOL_SERVICES.slice(),price:{}});
     return api('action=state&since=0');
   }).then(function(j){
     S.version = j.version;
@@ -536,6 +537,16 @@ function dateStrip(){
 }
 /* направления (категории услуг) из прайса */
 function allDirs(){ return S.dirs.map(function(d){ return d.cat; }); }
+function masterProfiles(){
+  if(Array.isArray(S.meta.master_profiles)) return S.meta.master_profiles;
+  if(Array.isArray(S.meta.master_profiles_view)) return S.meta.master_profiles_view;
+  return S.meta.specialists.map(function(s){return {name:s,id:'',active:true,configured:false,services:[]};});
+}
+function masterAllows(p,dir,names){
+  if(!p.active)return false;
+  if(!p.configured)return !Array.isArray(S.meta.master_profiles);
+  return names.length ? names.every(function(n){return p.services.some(function(x){return x.dir===dir&&x.name===n;});}) : p.services.some(function(x){return x.dir===dir;});
+}
 function svcLine(it){ return (it.services && it.services.length) ? it.services.join(' + ') : (it.service || ''); }
 /* ---- Солярий: отдельный режим ---- */
 var SOL_DIR = 'Солярий';
@@ -1180,12 +1191,12 @@ function openCard(bid, soft, prefill){
       o = '<option value="' + cur + '" selected>' + cur + ' мин</option>' + o;
     return o;
   }
-  function specOptsFor(dirCat, sel){
-    if (dirCat === SOL_DIR)
-      return SOL_SPECS.map(function(s){ return '<option' + (sel===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
-    var o = S.meta.specialists.map(function(s){ return '<option' + (sel===s?' selected':'') + '>' + esc(s) + '</option>'; }).join('');
-    if (sel && S.meta.specialists.indexOf(sel) < 0) o = '<option selected>' + esc(sel) + '</option>' + o;
-    return o;
+  function specOptsFor(dirCat, sel, names, retain){
+    if(dirCat===SOL_DIR)return SOL_SPECS.map(function(s){return '<option'+(sel===s?' selected':'')+'>'+esc(s)+'</option>';}).join('');
+    var list=masterProfiles().filter(function(p){return masterAllows(p,dirCat,names||[]);}).map(function(p){return p.name;});
+    var o='<option value="">'+(list.length?'— выберите специалиста —':'Нет подходящих специалистов')+'</option>';
+    if(retain && sel && list.indexOf(sel)<0) o+='<option selected>'+esc(sel)+'</option>';
+    return o+list.map(function(s){return '<option'+(sel===s?' selected':'')+'>'+esc(s)+'</option>';}).join('');
   }
   var curDur = t2m(it.end) - t2m(it.start);
   var durOpts = durOptsFor(it.dir, curDur);
@@ -1194,7 +1205,7 @@ function openCard(bid, soft, prefill){
   for (var tm = WORK_START*60; tm <= WORK_END*60-15; tm += 15) { if (it.start === m2t(tm)) onGrid = true; timeOpts += '<option' + (it.start===m2t(tm)?' selected':'') + '>' + m2t(tm) + '</option>'; }
   if (!onGrid) timeOpts = '<option selected>' + esc(it.start) + '</option>' + timeOpts;
   var dirOpts = S.dirs.map(function(dd){ return '<option' + (it.dir===dd.cat?' selected':'') + '>' + esc(dd.cat) + '</option>'; }).join('');
-  var specOpts = specOptsFor(it.dir, it.spec);
+  var specOpts = specOptsFor(it.dir, it.spec, it.services || (it.service ? [it.service] : []), !isNew);
 
   var hist = (it.history || []).slice().reverse().map(function(h){
     var d = new Date(h.t*1000);
@@ -1312,14 +1323,14 @@ function openCard(bid, soft, prefill){
         askInput('Своя услуга', 'Название услуги', function(nm){
           if (nm) selEl.insertAdjacentHTML('beforeend', '<option selected>' + esc(nm) + '</option>');
           else fillServSelect(selEl, '');
-          markDirty(); updSvcPrice();
+          markDirty(); fillSpec(); renderFree(); updSvcPrice();
         });
         return;
       }
-      markDirty(); updSvcPrice();
+      markDirty(); fillSpec(); renderFree(); updSvcPrice();
     });
     var del = row.querySelector('.mng-svcdel');
-    if (del) del.onclick = function(){ row.remove(); markDirty(); updSvcPrice(); };
+    if (del) del.onclick = function(){ row.remove(); markDirty(); fillSpec(); renderFree(); updSvcPrice(); };
   }
   function addSvcRow(sel){
     var list = $('mcSvcList');
@@ -1335,14 +1346,14 @@ function openCard(bid, soft, prefill){
   var initSvcs = (it.services && it.services.length) ? it.services.slice() : (it.service ? [it.service] : ['']);
   initSvcs.forEach(function(sv){ addSvcRow(sv); });
   updSvcPrice();
-  $('mcSvcAdd').onclick = function(){ addSvcRow(''); markDirty(); };
+  $('mcSvcAdd').onclick = function(){ addSvcRow(''); markDirty(); fillSpec(); renderFree(); updSvcPrice(); };
   function refillSvcSelects(){
     Array.prototype.forEach.call(ovl.querySelectorAll('#mcSvcList select'), function(s){
       var v = s.value; fillServSelect(s, '');
       if (v && Array.prototype.some.call(s.options, function(o){ return o.text === v; })) s.value = v;
     });
   }
-  function fillSpec(){ var keep = $('mcSpec').value; $('mcSpec').innerHTML = specOptsFor($('mcDir').value, keep); }
+  function fillSpec(){ var keep = $('mcSpec').value; $('mcSpec').innerHTML = specOptsFor($('mcDir').value, keep, svcNames(), false); }
   function fillDur(){ var keep = +$('mcDur').value; $('mcDur').innerHTML = durOptsFor($('mcDir').value, keep); }
   $('mcDir').onchange = function(){ refillSvcSelects(); fillSpec(); fillDur(); markDirty(); renderFree(); updSvcPrice(); };
   /* свободные окна: на основании существующих записей специалиста */
@@ -1360,7 +1371,13 @@ function openCard(bid, soft, prefill){
     });
   }
   renderFree();
-  $('mcDate').onchange = renderFree; $('mcSpec').onchange = renderFree;
+  $('mcDate').onchange = renderFree; $('mcSpec').onchange = function(){
+    var p=masterProfiles().filter(function(x){return x.name===$('mcSpec').value;})[0];
+    Array.prototype.forEach.call(ovl.querySelectorAll('#mcSvcList select'),function(el){
+      var val=el.value; fillServSelect(el,val);
+      if(p&&p.configured) Array.prototype.slice.call(el.options).forEach(function(o){if(o.value!==val && !masterAllows(p,$('mcDir').value,[o.value]))o.remove();});
+    }); renderFree();
+  };
   $('mcDur').onchange = function(){ renderFree(); updSvcPrice(); };
 
   function markDirty(){ S.dirty = true; }
@@ -1442,6 +1459,7 @@ function openCard(bid, soft, prefill){
     if (extra) for (var k in extra) data[k] = extra[k];
     data.action = 'save';
     if (!data.service) { toast('Укажите услугу'); return; }
+    if (!data.spec) { toast('Выберите специалиста'); return; }
     $('mcSave').disabled = true;
     api(null, data).then(function(j){
       S.version = j.version;
@@ -1996,7 +2014,7 @@ function openLeadCard(l, readonly){
   };
   document.getElementById('mlBook').onclick = function(){
     /* предзаполняем запись: желаемые дата/время из заявки */
-    var pre = {date: todayStr(), client: l.name || '', phone: l.phone ? '+' + l.phone : '', service: leadSvc(l)};
+    var fields=l.fields||{}; var requested=fields['Мастер']; var pre = {date: todayStr(), client: l.name || '', phone: l.phone ? '+' + l.phone : '', service: leadSvc(l), dir:fields['Направление']||'', spec:requested==='Любой мастер'||requested==='Без мастера'?'':requested||''};
     var dt = Date.parse((l.wdate || '').replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$2/$1/$3'));
     var iso = '';
     if (/^\d{4}-\d{2}-\d{2}$/.test(l.wdate || '')) iso = l.wdate;
@@ -2348,42 +2366,43 @@ function renderNotif(){
 
 /* ================= СПЕЦИАЛИСТЫ ================= */
 function renderSpecs(){
-  var body = document.getElementById('mngBody');
-  body.innerHTML =
-    '<div style="max-width:440px">' +
-    '<div style="color:var(--mut);font-size:13px;margin-bottom:14px">Этот список используется в записях, расписании и балансе. Изменения сразу видны всей команде.</div>' +
-    '<div id="spRows">' +
-    S.meta.specialists.map(function(s){
-      return '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="mng-inp sp-name" value="' + esc(s) + '" maxlength="40"><button class="mng-btn sm sp-del">✕</button></div>';
-    }).join('') + '</div>' +
-    '<button class="mng-btn sm" id="spAdd">+ Добавить</button>' +
-    '<div style="margin-top:18px"><button class="mng-btn gold" id="spSave">Сохранить список</button></div>' +
-    '<div style="color:var(--mut);font-size:12.5px;margin-top:16px">Участники модуля заходят по коду админ-панели и своему имени. Отдельные права и роли не нужны — все действия подписываются именем в истории записи.</div>' +
-    '</div>';
-  function bindDel(){
-    Array.prototype.forEach.call(body.querySelectorAll('.sp-del'), function(b){
-      b.onclick = function(){ b.parentNode.remove(); };
+  var body=document.getElementById('mngBody');
+  var draft=masterProfiles().map(function(p){return {id:p.id||'',name:p.name,active:p.active!==false,services:(p.services||[]).map(function(s){return {dir:s.dir,name:s.name};})};});
+  var dirs=S.dirs.filter(function(d){return d.cat!==SOL_DIR;});
+  var version=S.meta.v||0;
+  body.innerHTML='<div style="max-width:680px"><p style="color:var(--mut);font-size:13px">Назначьте мастеру услуги из действующего прайса. Сайт и приложение используют этот список. Отключение не удаляет историю.</p><div id="spRows"></div><button class="mng-btn sm" id="spAdd">+ Добавить специалиста</button><div style="margin-top:18px"><button class="mng-btn gold" id="spSave">Сохранить список</button></div></div>';
+  var host=document.getElementById('spRows');
+  function has(p,d,n){return p.services.some(function(s){return s.dir===d&&s.name===n;});}
+  function render(){
+    host.innerHTML='';
+    draft.forEach(function(p,i){
+      var card=document.createElement('section'); card.style.cssText='border:1px solid #e4d9c8;border-radius:12px;padding:12px;margin:0 0 12px;';
+      card.innerHTML='<label class="mng-lbl">Имя специалиста</label><input class="mng-inp sp-name" maxlength="40" value="'+esc(p.name)+'" placeholder="Имя специалиста"><label style="display:block;margin:10px 0"><input type="checkbox" class="sp-active" '+(p.active?'checked':'')+'> Принимает клиентов</label><div class="sp-cats"></div>'+(!p.id&&!S.meta.specialists.includes(p.name)?'<button class="mng-btn sm sp-remove">Убрать новую карточку</button>':'');
+      card.querySelector('.sp-name').oninput=function(){p.name=this.value;};
+      card.querySelector('.sp-active').onchange=function(){p.active=this.checked;};
+      var remove=card.querySelector('.sp-remove'); if(remove)remove.onclick=function(){draft.splice(i,1);render();};
+      dirs.forEach(function(d){
+        var detail=document.createElement('details');detail.style.cssText='padding:8px 0;border-top:1px solid #eee;';
+        var count=d.rows.filter(function(n){return has(p,d.cat,n);}).length;
+        detail.innerHTML='<summary style="cursor:pointer">'+esc(d.cat)+' <span style="color:var(--mut)" class="sp-count">'+count+'/'+d.rows.length+'</span></summary><label style="display:block;padding:8px 0"><input type="checkbox" class="sp-all"> Все услуги направления</label><div class="sp-services"></div>';
+        var list=detail.querySelector('.sp-services'),all=detail.querySelector('.sp-all');
+        function update(){var c=d.rows.filter(function(n){return has(p,d.cat,n);}).length;all.checked=c===d.rows.length&&c>0;all.indeterminate=c>0&&c<d.rows.length;detail.querySelector('.sp-count').textContent=c+'/'+d.rows.length;}
+        d.rows.forEach(function(n){
+          var label=document.createElement('label');label.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;';
+          var cb=document.createElement('input');cb.type='checkbox';cb.checked=has(p,d.cat,n);
+          label.appendChild(cb);label.appendChild(document.createTextNode(n+(d.price[n]!=null?' · '+rub(d.price[n]):'')));list.appendChild(label);
+          cb.onchange=function(){p.services=p.services.filter(function(s){return !(s.dir===d.cat&&s.name===n);});if(cb.checked)p.services.push({dir:d.cat,name:n});update();};
+        });
+        all.onchange=function(){var on=all.checked;p.services=p.services.filter(function(s){return s.dir!==d.cat;});if(on)d.rows.forEach(function(n){p.services.push({dir:d.cat,name:n});});Array.prototype.forEach.call(list.querySelectorAll('input'),function(c){c.checked=on;});update();};update();card.querySelector('.sp-cats').appendChild(detail);
+      });host.appendChild(card);
     });
   }
-  bindDel();
-  document.getElementById('spAdd').onclick = function(){
-    var d = document.createElement('div');
-    d.style.cssText = 'display:flex;gap:8px;margin-bottom:8px';
-    d.innerHTML = '<input class="mng-inp sp-name" maxlength="40" placeholder="Имя специалиста"><button class="mng-btn sm sp-del">✕</button>';
-    document.getElementById('spRows').appendChild(d);
-    bindDel();
-  };
-  document.getElementById('spSave').onclick = function(){
-    var list = [];
-    Array.prototype.forEach.call(body.querySelectorAll('.sp-name'), function(i){
-      var v = i.value.trim(); if (v && list.indexOf(v) < 0) list.push(v);
-    });
-    if (!list.length) { toast('Нужен хотя бы один специалист'); return; }
-    api(null, {action:'save_meta', specialists:list}).then(function(j){
-      S.meta = j.meta; S.version++;
-      toast('Список сохранён у всех участников');
-      renderSpecs();
-    }).catch(function(e){ toast(e.msg || 'Не сохранилось'); });
+  render();
+  document.getElementById('spAdd').onclick=function(){draft.push({id:'',name:'',active:true,services:[]});render();};
+  document.getElementById('spSave').onclick=function(){
+    if(draft.some(function(p){return !p.name.trim()||(p.active&&!p.services.length);})){toast('Укажите имя и услуги каждого активного специалиста');return;}
+    var btn=this;btn.disabled=true;
+    api(null,{action:'save_meta',meta_v:version,master_profiles:draft}).then(function(j){S.meta=j.meta;toast('Список сохранён');renderSpecs();}).catch(function(e){btn.disabled=false;toast(e.msg||'Не сохранилось');});
   };
 }
 

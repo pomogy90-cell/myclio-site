@@ -1,7 +1,7 @@
 /* КЛИО · Service Worker · v4 (27.11.2026)
    API и HTML — всегда из сети; изображения — сначала сеть (фото из админки
    обновляются сразу), офлайн — кэш; прочая статика — cache-first. */
-var CACHE = 'klio-v4';
+var CACHE = 'klio-master-sync-1';
 var STATIC = [
   './', 'index.html', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',

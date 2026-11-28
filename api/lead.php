@@ -36,6 +36,18 @@ if (strlen($phone) === 11 && $phone[0] === '8') $phone = '7' . substr($phone, 1)
 
 if (mb_strlen($name) < 2 || !preg_match('/^7\d{10}$/', $phone)) rej(422, 'invalid_name_or_phone');
 
+/* Check the currently published master/service pair before storing a request. */
+require_once __DIR__.'/master-catalog.php';
+$master=fld($fields,'Мастер'); $masterId=fld($fields,'ID мастера'); $dirName=fld($fields,'Направление'); $serviceName=fld($fields,'Услуга');
+if ($masterId!=='' || ($master!=='' && $master!=='Любой мастер' && $master!=='Без мастера')) {
+    $meta=klio_master_meta();
+    $profile=klio_find_master(klio_profiles($meta ?? []),$master,$masterId);
+    if (!$profile || empty($profile['active']) || empty($profile['configured']) || $dirName==='' || !klio_has_service($profile,$dirName,$serviceName)) rej(422,'master_service_unavailable');
+    $found=false; foreach (klio_catalog() as $c) if ($c['dir']===$dirName && $c['name']===$serviceName) { $found=true; break; }
+    if (!$found) rej(422,'master_service_unavailable');
+    $fields['Мастер']=$profile['name']; $fields['ID мастера']=$profile['id'];
+}
+
 /* rate-limit: не чаще 1 заявки в 60 сек с одного IP или на один телефон */
 $dir = __DIR__ . '/data';
 if (!is_dir($dir)) { @mkdir($dir, 0750, true); }
